@@ -1,0 +1,793 @@
+{
+  "profile": {
+    "geographic_location": {
+      "country": "India",
+      "specific_location": "Bansipur"
+    },
+    "time_period": {
+      "era": "Modern",
+      "time_of_day": "Night"
+    },
+    "weather": {
+      "condition": "Misty",
+      "details": "Faint mist curling along roads"
+    },
+    "ethnicity": "South Asian",
+    "mood": "Eerie, suspenseful",
+    "characters": [
+      {
+        "name": "Riya",
+        "role": "hero",
+        "visual_features": "Young woman, nervous expression",
+        "psychological_features": "Anxious but determined"
+      },
+      {
+        "name": "Kabir",
+        "role": "supporting",
+        "visual_features": "Young man, thoughtful demeanor",
+        "psychological_features": "Cautious and observant"
+      },
+      {
+        "name": "Mehul",
+        "role": "supporting",
+        "visual_features": "Young man, curious eyes",
+        "psychological_features": "Inquisitive and brave"
+      }
+    ]
+  },
+  "style": {
+    "style_description": "Cinematic style with a handheld feel, shot on a digital camera with a 35mm lens. Lighting is dim and moody, with a cool color palette. The tone is suspenseful, reminiscent of Hitchcock's thrillers, with a touch of supernatural horror."
+  },
+  "scenes": [
+    {
+      "scene_index": 1,
+      "narration_text": "It was past 8:00 PM when Riya, Kabir, and Mehul entered the silent city of Bansipur. A faint mist curled along the cracked roads, the streetlamps flickering as if unsure they wanted to stay lit.",
+      "subtitle_text": "The Arrival",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "A car driving into a misty, deserted city at night."
+        },
+        {
+          "stage_type": "lighting",
+          "prompt": "Streetlamps flickering, casting eerie shadows."
+        }
+      ],
+      "background_music": "Low, suspenseful strings with a hint of wind howling.",
+      "animation": {
+        "animation_type": "Ken Burns",
+        "ffmpeg_command": "-vf zoompan=d=250:fps=25,scale=1080:1920"
+      },
+      "duration_sec": 10,
+      "strength_from_previous": 0.5,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:00:01,000",
+          "end_time": "00:00:05,000",
+          "text": "It was past 8:00 PM when Riya, Kabir, and Mehul entered the silent city of Bansipur."
+        },
+        {
+          "index": 2,
+          "start_time": "00:00:05,500",
+          "end_time": "00:00:10,000",
+          "text": "A faint mist curled along the cracked roads, the streetlamps flickering as if unsure they wanted to stay lit."
+        }
+      ]
+    },
+    {
+      "scene_index": 2,
+      "narration_text": "They had been driving for hours, lost after taking a wrong turn from the highway. Fuel gauge—dangerously low.",
+      "subtitle_text": "Lost and Low on Fuel",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "Interior of a car, dashboard showing low fuel."
+        },
+        {
+          "stage_type": "details",
+          "prompt": "Riya looking worried, checking the map."
+        }
+      ],
+      "background_music": "Tense piano notes with a ticking clock sound.",
+      "animation": {
+        "animation_type": "Static",
+        "ffmpeg_command": "-vf scale=1080:1920"
+      },
+      "duration_sec": 8,
+      "strength_from_previous": 0.6,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:00:11,000",
+          "end_time": "00:00:14,000",
+          "text": "They had been driving for hours, lost after taking a wrong turn from the highway."
+        },
+        {
+          "index": 2,
+          "start_time": "00:00:14,500",
+          "end_time": "00:00:18,000",
+          "text": "Fuel gauge—dangerously low."
+        }
+      ]
+    },
+    {
+      "scene_index": 3,
+      "narration_text": "Bansipur looked deserted, except for one building at the end of the main road: a bright, glowing sign that read “Mehta Super Mart – Always Open.” Riya gave a nervous laugh.",
+      "subtitle_text": "A Beacon in the Deserted City",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "A glowing supermarket sign in the distance."
+        },
+        {
+          "stage_type": "lighting",
+          "prompt": "Neon lights casting a surreal glow."
+        }
+      ],
+      "background_music": "Ambient synths with a distant hum.",
+      "animation": {
+        "animation_type": "Parallax",
+        "ffmpeg_command": "-vf parallax=1.5:fps=25,scale=1080:1920"
+      },
+      "duration_sec": 10,
+      "strength_from_previous": 0.7,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:00:19,000",
+          "end_time": "00:00:23,000",
+          "text": "Bansipur looked deserted, except for one building at the end of the main road: a bright, glowing sign that read “Mehta Super Mart – Always Open.”"
+        },
+        {
+          "index": 2,
+          "start_time": "00:00:23,500",
+          "end_time": "00:00:25,000",
+          "text": "Riya gave a nervous laugh."
+        }
+      ]
+    },
+    {
+      "scene_index": 4,
+      "narration_text": "“Creepy or not, we need snacks. And water. And… maybe a map.” They parked, the sound of their car engine echoing too loudly in the empty street.",
+      "subtitle_text": "Necessities First",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "Riya, Kabir, and Mehul getting out of the car."
+        },
+        {
+          "stage_type": "details",
+          "prompt": "Empty street with their footsteps echoing."
+        }
+      ],
+      "background_music": "Echoing footsteps with a distant car engine hum.",
+      "animation": {
+        "animation_type": "Static",
+        "ffmpeg_command": "-vf scale=1080:1920"
+      },
+      "duration_sec": 8,
+      "strength_from_previous": 0.8,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:00:26,000",
+          "end_time": "00:00:29,000",
+          "text": "“Creepy or not, we need snacks. And water. And… maybe a map.”"
+        },
+        {
+          "index": 2,
+          "start_time": "00:00:29,500",
+          "end_time": "00:00:32,000",
+          "text": "They parked, the sound of their car engine echoing too loudly in the empty street."
+        }
+      ]
+    },
+    {
+      "scene_index": 5,
+      "narration_text": "The sliding doors of the supermarket opened with a slow hiss, though no one stood behind the counter. Inside, the air was too cold for summer.",
+      "subtitle_text": "An Unsettling Welcome",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "Supermarket entrance with sliding doors opening."
+        },
+        {
+          "stage_type": "lighting",
+          "prompt": "Cold, fluorescent lighting inside."
+        }
+      ],
+      "background_music": "Soft, eerie synths with a low hum.",
+      "animation": {
+        "animation_type": "Cinemagraph",
+        "ffmpeg_command": "-vf loop=1:fps=25,scale=1080:1920"
+      },
+      "duration_sec": 10,
+      "strength_from_previous": 0.9,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:00:33,000",
+          "end_time": "00:00:36,000",
+          "text": "The sliding doors of the supermarket opened with a slow hiss, though no one stood behind the counter."
+        },
+        {
+          "index": 2,
+          "start_time": "00:00:36,500",
+          "end_time": "00:00:39,000",
+          "text": "Inside, the air was too cold for summer."
+        }
+      ]
+    },
+    {
+      "scene_index": 6,
+      "narration_text": "The lights buzzed overhead, but the aisles were perfectly stocked—cereal boxes lined like soldiers, canned goods gleaming, fruits unnaturally shiny.",
+      "subtitle_text": "Too Perfect to be Real",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "Aisles of a supermarket, perfectly stocked."
+        },
+        {
+          "stage_type": "details",
+          "prompt": "Cereal boxes lined neatly, fruits shining."
+        }
+      ],
+      "background_music": "Buzzing fluorescent lights with a faint melody.",
+      "animation": {
+        "animation_type": "Ken Burns",
+        "ffmpeg_command": "-vf zoompan=d=250:fps=25,scale=1080:1920"
+      },
+      "duration_sec": 10,
+      "strength_from_previous": 1.0,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:00:40,000",
+          "end_time": "00:00:44,000",
+          "text": "The lights buzzed overhead, but the aisles were perfectly stocked—cereal boxes lined like soldiers, canned goods gleaming, fruits unnaturally shiny."
+        }
+      ]
+    },
+    {
+      "scene_index": 7,
+      "narration_text": "Mehul called out, “Hello? Anyone here?” Only the sound of the automatic doors sighing shut behind them replied.",
+      "subtitle_text": "Echoes of Silence",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "Mehul standing in an empty aisle, calling out."
+        },
+        {
+          "stage_type": "details",
+          "prompt": "Automatic doors closing with a soft hiss."
+        }
+      ],
+      "background_music": "Silence with a distant echo.",
+      "animation": {
+        "animation_type": "Static",
+        "ffmpeg_command": "-vf scale=1080:1920"
+      },
+      "duration_sec": 8,
+      "strength_from_previous": 1.0,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:00:45,000",
+          "end_time": "00:00:47,000",
+          "text": "Mehul called out, “Hello? Anyone here?”"
+        },
+        {
+          "index": 2,
+          "start_time": "00:00:47,500",
+          "end_time": "00:00:49,000",
+          "text": "Only the sound of the automatic doors sighing shut behind them replied."
+        }
+      ]
+    },
+    {
+      "scene_index": 8,
+      "narration_text": "They walked toward the back, looking for a cashier, when Kabir noticed a sign: “More items downstairs →” A narrow staircase led downward, lit by a single dangling bulb.",
+      "subtitle_text": "The Descent Begins",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "A narrow staircase leading downwards."
+        },
+        {
+          "stage_type": "lighting",
+          "prompt": "Dim bulb casting shadows on the stairs."
+        }
+      ],
+      "background_music": "Low, ominous tones with a faint heartbeat.",
+      "animation": {
+        "animation_type": "Parallax",
+        "ffmpeg_command": "-vf parallax=1.5:fps=25,scale=1080:1920"
+      },
+      "duration_sec": 10,
+      "strength_from_previous": 0.7,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:00:50,000",
+          "end_time": "00:00:53,000",
+          "text": "They walked toward the back, looking for a cashier, when Kabir noticed a sign: “More items downstairs →”"
+        },
+        {
+          "index": 2,
+          "start_time": "00:00:53,500",
+          "end_time": "00:00:56,000",
+          "text": "A narrow staircase led downward, lit by a single dangling bulb."
+        }
+      ]
+    },
+    {
+      "scene_index": 9,
+      "narration_text": "“Maybe the office is down there?” Riya suggested. The steps creaked under their feet. The air smelled of something damp and metallic.",
+      "subtitle_text": "A Step into the Unknown",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "Riya leading the way down the stairs."
+        },
+        {
+          "stage_type": "details",
+          "prompt": "Creaking steps and damp, metallic smell."
+        }
+      ],
+      "background_music": "Creaking wood with a distant metallic clang.",
+      "animation": {
+        "animation_type": "Cinemagraph",
+        "ffmpeg_command": "-vf loop=1:fps=25,scale=1080:1920"
+      },
+      "duration_sec": 10,
+      "strength_from_previous": 0.8,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:00:57,000",
+          "end_time": "00:00:59,000",
+          "text": "“Maybe the office is down there?” Riya suggested."
+        },
+        {
+          "index": 2,
+          "start_time": "00:00:59,500",
+          "end_time": "00:01:02,000",
+          "text": "The steps creaked under their feet. The air smelled of something damp and metallic."
+        }
+      ]
+    },
+    {
+      "scene_index": 10,
+      "narration_text": "They reached the bottom— —only to find another sign: “More items downstairs →” Another staircase. Same dim bulb. Same creaking steps.",
+      "subtitle_text": "An Endless Descent",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "Another identical staircase at the bottom."
+        },
+        {
+          "stage_type": "details",
+          "prompt": "Dim bulb and creaking steps repeating."
+        }
+      ],
+      "background_music": "Repetitive, eerie tones with a low drone.",
+      "animation": {
+        "animation_type": "Ken Burns",
+        "ffmpeg_command": "-vf zoompan=d=250:fps=25,scale=1080:1920"
+      },
+      "duration_sec": 10,
+      "strength_from_previous": 0.9,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:01:03,000",
+          "end_time": "00:01:05,000",
+          "text": "They reached the bottom—"
+        },
+        {
+          "index": 2,
+          "start_time": "00:01:05,500",
+          "end_time": "00:01:08,000",
+          "text": "—only to find another sign: “More items downstairs →”"
+        },
+        {
+          "index": 3,
+          "start_time": "00:01:08,500",
+          "end_time": "00:01:10,000",
+          "text": "Another staircase. Same dim bulb. Same creaking steps."
+        }
+      ]
+    },
+    {
+      "scene_index": 11,
+      "narration_text": "“Wait,” Mehul said, frowning, “We just… came down. How is there another one?” They climbed back up— —but when they reached the “top,” it wasn’t the supermarket floor.",
+      "subtitle_text": "A Looping Nightmare",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "Mehul looking confused at the repeating staircase."
+        },
+        {
+          "stage_type": "details",
+          "prompt": "Staircase looping back on itself."
+        }
+      ],
+      "background_music": "Confused whispers with a looping melody.",
+      "animation": {
+        "animation_type": "Parallax",
+        "ffmpeg_command": "-vf parallax=1.5:fps=25,scale=1080:1920"
+      },
+      "duration_sec": 10,
+      "strength_from_previous": 1.0,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:01:11,000",
+          "end_time": "00:01:13,000",
+          "text": "“Wait,” Mehul said, frowning, “We just… came down. How is there another one?”"
+        },
+        {
+          "index": 2,
+          "start_time": "00:01:13,500",
+          "end_time": "00:01:15,000",
+          "text": "They climbed back up—"
+        },
+        {
+          "index": 3,
+          "start_time": "00:01:15,500",
+          "end_time": "00:01:17,000",
+          "text": "—but when they reached the “top,” it wasn’t the supermarket floor."
+        }
+      ]
+    },
+    {
+      "scene_index": 12,
+      "narration_text": "It was another identical staircase… leading further down. The walls seemed closer. The air, heavier.",
+      "subtitle_text": "Deeper into the Abyss",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "Staircase leading further down, walls closing in."
+        },
+        {
+          "stage_type": "lighting",
+          "prompt": "Heavy, oppressive atmosphere."
+        }
+      ],
+      "background_music": "Deep, resonant tones with a heavy bass.",
+      "animation": {
+        "animation_type": "Cinemagraph",
+        "ffmpeg_command": "-vf loop=1:fps=25,scale=1080:1920"
+      },
+      "duration_sec": 10,
+      "strength_from_previous": 1.0,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:01:18,000",
+          "end_time": "00:01:20,000",
+          "text": "It was another identical staircase… leading further down."
+        },
+        {
+          "index": 2,
+          "start_time": "00:01:20,500",
+          "end_time": "00:01:22,000",
+          "text": "The walls seemed closer. The air, heavier."
+        }
+      ]
+    },
+    {
+      "scene_index": 13,
+      "narration_text": "They tried running up, running down, skipping steps, even counting—but the count never ended. Every landing led to the same staircase, the same buzzing bulb, the same damp smell.",
+      "subtitle_text": "Trapped in Infinity",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "Riya, Kabir, and Mehul running up and down the stairs."
+        },
+        {
+          "stage_type": "details",
+          "prompt": "Buzzing bulb and damp smell repeating."
+        }
+      ],
+      "background_music": "Fast-paced, frantic strings with a repetitive beat.",
+      "animation": {
+        "animation_type": "Ken Burns",
+        "ffmpeg_command": "-vf zoompan=d=250:fps=25,scale=1080:1920"
+      },
+      "duration_sec": 10,
+      "strength_from_previous": 1.0,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:01:23,000",
+          "end_time": "00:01:25,000",
+          "text": "They tried running up, running down, skipping steps, even counting—but the count never ended."
+        },
+        {
+          "index": 2,
+          "start_time": "00:01:25,500",
+          "end_time": "00:01:27,000",
+          "text": "Every landing led to the same staircase, the same buzzing bulb, the same damp smell."
+        }
+      ]
+    },
+    {
+      "scene_index": 14,
+      "narration_text": "Hours—or maybe minutes—passed. Their phones had no signal. Batteries drained faster than they should.",
+      "subtitle_text": "Time Slips Away",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "Close-up of phones with no signal, batteries draining."
+        },
+        {
+          "stage_type": "details",
+          "prompt": "Riya looking at her watch, confused."
+        }
+      ],
+      "background_music": "Slow, ticking clock with a fading melody.",
+      "animation": {
+        "animation_type": "Static",
+        "ffmpeg_command": "-vf scale=1080:1920"
+      },
+      "duration_sec": 8,
+      "strength_from_previous": 1.0,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:01:28,000",
+          "end_time": "00:01:30,000",
+          "text": "Hours—or maybe minutes—passed."
+        },
+        {
+          "index": 2,
+          "start_time": "00:01:30,500",
+          "end_time": "00:01:32,000",
+          "text": "Their phones had no signal. Batteries drained faster than they should."
+        }
+      ]
+    },
+    {
+      "scene_index": 15,
+      "narration_text": "Riya’s water bottle slipped from her hand and rolled down… endlessly. They never heard it hit the bottom.",
+      "subtitle_text": "Endless Descent",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "Water bottle rolling down the stairs, disappearing into darkness."
+        },
+        {
+          "stage_type": "details",
+          "prompt": "Riya watching it roll, eyes wide."
+        }
+      ],
+      "background_music": "Echoing roll with a distant, fading sound.",
+      "animation": {
+        "animation_type": "Cinemagraph",
+        "ffmpeg_command": "-vf loop=1:fps=25,scale=1080:1920"
+      },
+      "duration_sec": 10,
+      "strength_from_previous": 1.0,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:01:33,000",
+          "end_time": "00:01:35,000",
+          "text": "Riya’s water bottle slipped from her hand and rolled down… endlessly."
+        },
+        {
+          "index": 2,
+          "start_time": "00:01:35,500",
+          "end_time": "00:01:37,000",
+          "text": "They never heard it hit the bottom."
+        }
+      ]
+    },
+    {
+      "scene_index": 16,
+      "narration_text": "Kabir began muttering, “We’re not supposed to be here… We weren’t supposed to see this.” Then they noticed something new— On the wall, near the bulb, a smear. Dark red.",
+      "subtitle_text": "A Sinister Discovery",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "Kabir muttering to himself, looking distressed."
+        },
+        {
+          "stage_type": "details",
+          "prompt": "Dark red smear on the wall near the bulb."
+        }
+      ],
+      "background_music": "Low, ominous hum with a rising tension.",
+      "animation": {
+        "animation_type": "Ken Burns",
+        "ffmpeg_command": "-vf zoompan=d=250:fps=25,scale=1080:1920"
+      },
+      "duration_sec": 10,
+      "strength_from_previous": 1.0,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:01:38,000",
+          "end_time": "00:01:40,000",
+          "text": "Kabir began muttering, “We’re not supposed to be here… We weren’t supposed to see this.”"
+        },
+        {
+          "index": 2,
+          "start_time": "00:01:40,500",
+          "end_time": "00:01:42,000",
+          "text": "Then they noticed something new—"
+        },
+        {
+          "index": 3,
+          "start_time": "00:01:42,500",
+          "end_time": "00:01:44,000",
+          "text": "On the wall, near the bulb, a smear. Dark red."
+        }
+      ]
+    },
+    {
+      "scene_index": 17,
+      "narration_text": "The smear grew fresher, dripping. From above, faint footsteps echoed—slow, deliberate.",
+      "subtitle_text": "The Presence Above",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "Dark red smear dripping down the wall."
+        },
+        {
+          "stage_type": "details",
+          "prompt": "Faint footsteps echoing from above."
+        }
+      ],
+      "background_music": "Slow, deliberate footsteps with a dripping sound.",
+      "animation": {
+        "animation_type": "Parallax",
+        "ffmpeg_command": "-vf parallax=1.5:fps=25,scale=1080:1920"
+      },
+      "duration_sec": 10,
+      "strength_from_previous": 1.0,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:01:45,000",
+          "end_time": "00:01:47,000",
+          "text": "The smear grew fresher, dripping."
+        },
+        {
+          "index": 2,
+          "start_time": "00:01:47,500",
+          "end_time": "00:01:49,000",
+          "text": "From above, faint footsteps echoed—slow, deliberate."
+        }
+      ]
+    },
+    {
+      "scene_index": 18,
+      "narration_text": "But when they looked up, the staircase was empty. The lights began to flicker, and in one brief flash, Riya saw them— Three figures. Pale. Wide-eyed. Standing on the stairs just a few steps above.",
+      "subtitle_text": "A Glimpse of Horror",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "Riya looking up at the empty staircase."
+        },
+        {
+          "stage_type": "details",
+          "prompt": "Flickering lights revealing pale figures."
+        }
+      ],
+      "background_music": "Flickering lights with a sudden, sharp note.",
+      "animation": {
+        "animation_type": "Cinemagraph",
+        "ffmpeg_command": "-vf loop=1:fps=25,scale=1080:1920"
+      },
+      "duration_sec": 10,
+      "strength_from_previous": 1.0,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:01:50,000",
+          "end_time": "00:01:52,000",
+          "text": "But when they looked up, the staircase was empty."
+        },
+        {
+          "index": 2,
+          "start_time": "00:01:52,500",
+          "end_time": "00:01:54,000",
+          "text": "The lights began to flicker, and in one brief flash, Riya saw them—"
+        },
+        {
+          "index": 3,
+          "start_time": "00:01:54,500",
+          "end_time": "00:01:56,000",
+          "text": "Three figures. Pale. Wide-eyed. Standing on the stairs just a few steps above."
+        }
+      ]
+    },
+    {
+      "scene_index": 19,
+      "narration_text": "They looked exactly like Riya, Kabir, and Mehul— —but their faces were twisted, rotting, their eyes black pits.",
+      "subtitle_text": "Reflections of Fear",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "Figures resembling Riya, Kabir, and Mehul, but distorted."
+        },
+        {
+          "stage_type": "details",
+          "prompt": "Twisted faces with black pit eyes."
+        }
+      ],
+      "background_music": "Distorted, eerie tones with a low rumble.",
+      "animation": {
+        "animation_type": "Ken Burns",
+        "ffmpeg_command": "-vf zoompan=d=250:fps=25,scale=1080:1920"
+      },
+      "duration_sec": 10,
+      "strength_from_previous": 1.0,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:01:57,000",
+          "end_time": "00:01:59,000",
+          "text": "They looked exactly like Riya, Kabir, and Mehul—"
+        },
+        {
+          "index": 2,
+          "start_time": "00:01:59,500",
+          "end_time": "00:02:01,000",
+          "text": "—but their faces were twisted, rotting, their eyes black pits."
+        }
+      ]
+    },
+    {
+      "scene_index": 20,
+      "narration_text": "The next flicker of light went out completely. In the darkness, the footsteps came closer. The last thing anyone heard was the supermarket doors hissing open upstairs… …with no one coming out.",
+      "subtitle_text": "The Final Silence",
+      "visual_prompts": [
+        {
+          "stage_type": "base",
+          "prompt": "Complete darkness with footsteps approaching."
+        },
+        {
+          "stage_type": "details",
+          "prompt": "Supermarket doors hissing open with no one visible."
+        }
+      ],
+      "background_music": "Complete silence with a distant, echoing hiss.",
+      "animation": {
+        "animation_type": "Static",
+        "ffmpeg_command": "-vf scale=1080:1920"
+      },
+      "duration_sec": 10,
+      "strength_from_previous": 1.0,
+      "subtitles": [
+        {
+          "index": 1,
+          "start_time": "00:02:02,000",
+          "end_time": "00:02:04,000",
+          "text": "The next flicker of light went out completely."
+        },
+        {
+          "index": 2,
+          "start_time": "00:02:04,500",
+          "end_time": "00:02:06,000",
+          "text": "In the darkness, the footsteps came closer."
+        },
+        {
+          "index": 3,
+          "start_time": "00:02:06,500",
+          "end_time": "00:02:08,000",
+          "text": "The last thing anyone heard was the supermarket doors hissing open upstairs…"
+        },
+        {
+          "index": 4,
+          "start_time": "00:02:08,500",
+          "end_time": "00:02:10,000",
+          "text": "…with no one coming out."
+        }
+      ]
+    }
+  ]
+}
