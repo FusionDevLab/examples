@@ -12,7 +12,7 @@ from io import BytesIO
 from tenacity import retry, stop_after_attempt, wait_exponential, RetryError
 
 # Initialize Gemini client with your API key
-client = genai.Client(api_key="AIzaSyDC094CEM5DS3-7qBLeDzAlUZTYZY-XhVw")
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 # Use a valid model for image generation that's available in your account
 # From the model listing, these models support image generation:

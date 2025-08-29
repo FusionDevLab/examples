@@ -8,7 +8,7 @@ from google import genai
 from google.genai import types
 
 # Initialize client
-client = genai.Client(api_key="AIzaSyDC094CEM5DS3-7qBLeDzAlUZTYZY-XhVw")
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 def test_gemini_image_generation():
     """Test image generation with gemini-2.5-flash-image-preview"""
