@@ -7,11 +7,6 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
     const [isProcessing, setIsProcessing] = useState(false);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [originalAudioDuration, setOriginalAudioDuration] = useState(30); // Original track duration - default to 30s
-    const [timelineDuration, setTimelineDuration] = useState(30); // Timeline duration based on original + extensions
-    const [isDragging, setIsDragging] = useState(false);
-    const [dragTrackId, setDragTrackId] = useState(null);
-    const [dragOffset, setDragOffset] = useState(0);
-    const [playheadPosition, setPlayheadPosition] = useState(0);
 
     // Get original audio duration when component loads
     React.useEffect(() => {
@@ -20,19 +15,28 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
             audio.addEventListener('loadedmetadata', () => {
                 const duration = Math.max(audio.duration, 30); // Minimum 30 seconds for better visualization
                 setOriginalAudioDuration(duration);
-                setTimelineDuration(duration);
             });
             audio.addEventListener('error', () => {
                 // Fallback to 30 seconds if audio fails to load
                 setOriginalAudioDuration(30);
-                setTimelineDuration(30);
             });
         } else {
             // Default to 30 seconds if no audio URL
             setOriginalAudioDuration(30);
-            setTimelineDuration(30);
         }
     }, [generatedAudioUrl]);
+
+    // Sync audio element volumes with track settings
+    React.useEffect(() => {
+        audioTracks.forEach(track => {
+            if (track.url) {
+                const audioElement = document.querySelector(`audio[data-track-id="${track.id}"]`);
+                if (audioElement) {
+                    audioElement.volume = track.volume;
+                }
+            }
+        });
+    }, [audioTracks]);
 
     const addAudioTrack = () => {
         const newTrack = {
@@ -48,17 +52,8 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
             fadeOut: 0.5, // Fade out duration in seconds
             color: `hsl(${Math.random() * 360}, 70%, 60%)` // Random color for timeline visualization
         };
-        
-        setAudioTracks(prev => [...prev, newTrack]);
-    };
 
-    // Update timeline duration based on tracks
-    const updateTimelineDuration = (tracks) => {
-        const maxEndTime = Math.max(
-            originalAudioDuration,
-            ...tracks.map(t => t.startTime + t.duration)
-        );
-        setTimelineDuration(Math.max(originalAudioDuration, maxEndTime + 2)); // Add 2 seconds buffer
+        setAudioTracks(prev => [...prev, newTrack]);
     };
 
     const removeAudioTrack = (trackId) => {
@@ -67,12 +62,18 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
 
     const updateAudioTrack = (trackId, key, value) => {
         setAudioTracks(prev => {
-            const updatedTracks = prev.map(track => 
+            const updatedTracks = prev.map(track =>
                 track.id === trackId ? { ...track, [key]: value } : track
             );
-            // Update timeline duration when track properties change
-            if (key === 'startTime' || key === 'duration') {
-                updateTimelineDuration(updatedTracks);
+            // Update audio element volume when volume changes
+            if (key === 'volume') {
+                // Use setTimeout to ensure DOM is updated
+                setTimeout(() => {
+                    const audioElement = document.querySelector(`audio[data-track-id="${trackId}"]`);
+                    if (audioElement) {
+                        audioElement.volume = value;
+                    }
+                }, 0);
             }
             return updatedTracks;
         });
@@ -85,7 +86,7 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
             updateAudioTrack(trackId, 'file', file);
             updateAudioTrack(trackId, 'url', url);
             updateAudioTrack(trackId, 'name', file.name);
-            
+
             // Get audio duration
             const audio = new Audio(url);
             audio.addEventListener('loadedmetadata', () => {
@@ -94,77 +95,10 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
         }
     };
 
-    const handleTrackDragStart = (trackId, e) => {
-        setIsDragging(true);
-        setDragTrackId(trackId);
-        
-        // Get timeline container for accurate offset calculation
-        const timelineContainer = e.currentTarget.closest('.timeline-tracks');
-        const timelineRect = timelineContainer.getBoundingClientRect();
-        const mouseX = e.clientX;
-        
-        // Calculate offset from mouse to start of track within timeline
-        const track = audioTracks.find(t => t.id === trackId);
-        const trackStartX = timelineRect.left + 10 + (track.startTime / timelineDuration) * (timelineRect.width - 20);
-        setDragOffset(mouseX - trackStartX);
-        
-        // Create custom drag image to improve visual feedback
-        const dragImage = e.currentTarget.cloneNode(true);
-        dragImage.style.opacity = '0.7';
-        dragImage.style.transform = 'rotate(2deg)';
-        document.body.appendChild(dragImage);
-        e.dataTransfer.setDragImage(dragImage, 0, 20);
-        setTimeout(() => document.body.removeChild(dragImage), 0);
-        
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', trackId);
-    };
-
-    const handleTimelineDrop = (e) => {
-        e.preventDefault();
-        if (dragTrackId && isDragging) {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const mouseX = e.clientX;
-            const timelineWidth = rect.width - 20; // Account for padding
-            
-            // More precise calculation with offset
-            const relativeX = Math.max(0, mouseX - rect.left - 10 - dragOffset);
-            const newStartTime = Math.max(0, Math.min(
-                (relativeX / timelineWidth) * timelineDuration,
-                timelineDuration - 1 // Ensure track doesn't go beyond timeline
-            ));
-            
-            // Snap to 0.5-second intervals for better precision
-            const snappedStartTime = Math.round(newStartTime * 2) / 2;
-            
-            updateAudioTrack(dragTrackId, 'startTime', snappedStartTime);
-        }
-        setIsDragging(false);
-        setDragTrackId(null);
-        setDragOffset(0);
-    };
-
-    const handleTimelineDragOver = (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-    };
-
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    const getTrackWidthPercentage = (track) => {
-        return Math.max(2, (track.duration / timelineDuration) * 100); // Minimum 2% width for visibility
-    };
-
-    const getTrackLeftPercentage = (track) => {
-        return (track.startTime / timelineDuration) * 100;
-    };
-
-    const getOriginalTrackWidthPercentage = () => {
-        return (originalAudioDuration / timelineDuration) * 100;
     };
 
     const resetAllSettings = () => {
@@ -186,41 +120,52 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
         try {
             setIsProcessing(true);
 
-            // Format data for pydub backend
-            const pydubData = {
+            // Create FormData for multipart upload
+            const formData = new FormData();
+            
+            // Add metadata as JSON
+            const metadata = {
                 story_id: storyId,
                 scene_id: String(scene.id),
                 base_audio: {
                     url: generatedAudioUrl,
                     format: "mp3"
                 },
-                overlay_tracks: audioTracks
-                    .filter(track => track.file && track.url)
-                    .map(track => ({
-                        id: track.id,
-                        name: track.name,
-                        audio_data: track.url, // In real implementation, this would be base64 or file path
-                        start_time_ms: Math.round(track.startTime * 1000), // Convert to milliseconds for pydub
-                        duration_ms: Math.round(track.duration * 1000),
-                        volume_db: Math.round(20 * Math.log10(track.volume)), // Convert linear to dB
-                        fade_in_ms: Math.round(track.fadeIn * 1000),
-                        fade_out_ms: Math.round(track.fadeOut * 1000),
-                        loop: track.loop,
-                        format: "mp3"
-                    })),
                 output_format: "mp3",
-                normalize: true, // Normalize final output
+                normalize: true,
                 export_quality: "high"
             };
+            
+            formData.append('metadata', JSON.stringify(metadata));
+            
+            // Add overlay track configurations and files
+            const validTracks = audioTracks.filter(track => track.file && track.url);
+            
+            validTracks.forEach((track, index) => {
+                // Add the actual audio file
+                formData.append(`overlay_file_${index}`, track.file);
+                
+                // Add track configuration
+                const trackConfig = {
+                    id: track.id,
+                    name: track.name,
+                    start_time_ms: Math.round(track.startTime * 1000),
+                    duration_ms: Math.round(track.duration * 1000),
+                    volume_db: Math.round(20 * Math.log10(track.volume)),
+                    fade_in_ms: Math.round(track.fadeIn * 1000),
+                    fade_out_ms: Math.round(track.fadeOut * 1000),
+                    loop: track.loop,
+                    format: "mp3"
+                };
+                
+                formData.append(`track_config_${index}`, JSON.stringify(trackConfig));
+            });
 
-            console.log('Pydub mixing data:', JSON.stringify(pydubData, null, 2));
+            console.log('Sending multipart data with', validTracks.length, 'audio files');
 
             const response = await fetch('http://localhost:8000/generate/audio/mix', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(pydubData)
+                body: formData // Don't set Content-Type header - browser will set it automatically with boundary
             });
 
             if (response.ok) {
@@ -262,21 +207,18 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                 </div>
 
                 <div className="sound-mixer-content">
-                    {/* Timeline Section */}
+                    {/* Audio Tracks Section */}
                     <div className="mixer-section">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                            <h4 className="section-title">🎵 Audio Timeline</h4>
+                            <h4 className="section-title">🎵 Audio Tracks</h4>
                             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                                 <div className="timeline-info">
-                                    <span className="timeline-duration">
-                                        ⏱️ Total: {formatTime(timelineDuration)}
-                                    </span>
                                     <span className="original-duration">
-                                        🎤 Original: {formatTime(originalAudioDuration)}
+                                        🎤 Scene Audio Duration: {formatTime(originalAudioDuration)}
                                     </span>
                                     {audioTracks.length > 0 && (
                                         <span className="tracks-count">
-                                            🎶 {audioTracks.length} track{audioTracks.length !== 1 ? 's' : ''}
+                                            🎶 {audioTracks.length} track{audioTracks.length !== 1 ? 's' : ''} added
                                         </span>
                                     )}
                                 </div>
@@ -288,177 +230,18 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                                 </button>
                             </div>
                         </div>
-
-                        {/* Timeline Container */}
-                        <div className="timeline-container">
-                            {/* Time ruler */}
-                            <div className="timeline-ruler">
-                                {Array.from({ length: Math.ceil(timelineDuration / 5) + 1 }, (_, i) => i * 5).map(time => (
-                                    <div
-                                        key={time}
-                                        className="timeline-marker"
-                                        style={{
-                                            left: `${(time / timelineDuration) * 100}%`,
-                                            position: 'absolute',
-                                            top: 0,
-                                            height: '100%',
-                                            borderLeft: time % 20 === 0 ? '2px solid #2c3e50' : time % 10 === 0 ? '1px solid #7f8c8d' : '1px solid #ecf0f1',
-                                            paddingLeft: '4px',
-                                            fontSize: '0.75rem',
-                                            color: time % 20 === 0 ? '#2c3e50' : '#7f8c8d',
-                                            fontWeight: time % 20 === 0 ? 'bold' : 'normal'
-                                        }}
-                                    >
-                                        {time % 5 === 0 && time <= timelineDuration ? formatTime(time) : ''}
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Main timeline track area */}
-                            <div
-                                className="timeline-tracks"
-                                onDrop={handleTimelineDrop}
-                                onDragOver={handleTimelineDragOver}
-                                style={{
-                                    position: 'relative',
-                                    minHeight: '200px',
-                                    backgroundColor: '#f8f9fa',
-                                    border: '2px dashed #ddd',
-                                    borderRadius: '8px',
-                                    marginTop: '30px',
-                                    padding: '10px'
-                                }}
-                            >
-                                {/* Base audio track visualization */}
-                                <div className="base-track" style={{
-                                    position: 'absolute',
-                                    top: '10px',
-                                    left: '10px',
-                                    width: `${getOriginalTrackWidthPercentage()}%`,
-                                    height: '40px',
-                                    background: 'linear-gradient(90deg, #3498db, #2980b9)',
-                                    borderRadius: '4px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    padding: '0 1rem',
-                                    color: 'white',
-                                    fontSize: '0.9rem',
-                                    fontWeight: '500',
-                                    boxShadow: '0 2px 6px rgba(52, 152, 219, 0.3)',
-                                    border: '2px solid rgba(255, 255, 255, 0.2)'
-                                }}>
-                                    🎤 Scene Audio ({formatTime(originalAudioDuration)})
-                                </div>
-
-                                {/* Audio tracks */}
-                                {audioTracks.map((track, index) => (
-                                    <div
-                                        key={track.id}
-                                        className="timeline-track"
-                                        draggable={track.url ? true : false}
-                                        onDragStart={(e) => track.url && handleTrackDragStart(track.id, e)}
-                                        style={{
-                                            position: 'absolute',
-                                            top: `${60 + index * 50}px`,
-                                            left: `${10 + (getTrackLeftPercentage(track) * 0.98)}%`, // 0.98 to account for padding
-                                            width: `${getTrackWidthPercentage(track) * 0.98}%`,
-                                            height: '40px',
-                                            backgroundColor: track.url ? track.color : '#95a5a6',
-                                            borderRadius: '4px',
-                                            cursor: track.url ? 'grab' : 'not-allowed',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            padding: '0 0.5rem',
-                                            color: 'white',
-                                            fontSize: '0.8rem',
-                                            fontWeight: '500',
-                                            boxShadow: track.url ? '0 2px 4px rgba(0,0,0,0.2)' : '0 1px 2px rgba(0,0,0,0.1)',
-                                            border: track.url ? '2px solid rgba(255,255,255,0.3)' : '2px dashed rgba(255,255,255,0.5)',
-                                            overflow: 'hidden',
-                                            transition: isDragging && dragTrackId === track.id ? 'none' : 'all 0.2s ease',
-                                            opacity: track.url ? 1 : 0.7,
-                                            background: track.url ? track.color : 'linear-gradient(45deg, #95a5a6, #bdc3c7)'
-                                        }}
-                                    >
-                                        {/* Fade in indicator */}
-                                        {track.fadeIn > 0 && track.url && (
-                                            <div style={{
-                                                position: 'absolute',
-                                                left: 0,
-                                                top: 0,
-                                                bottom: 0,
-                                                width: `${Math.min(50, (track.fadeIn / track.duration) * 100)}%`,
-                                                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3))',
-                                                borderRadius: '4px 0 0 4px'
-                                            }} />
-                                        )}
-                                        
-                                        {/* Fade out indicator */}
-                                        {track.fadeOut > 0 && track.url && (
-                                            <div style={{
-                                                position: 'absolute',
-                                                right: 0,
-                                                top: 0,
-                                                bottom: 0,
-                                                width: `${Math.min(50, (track.fadeOut / track.duration) * 100)}%`,
-                                                background: 'linear-gradient(90deg, rgba(255,255,255,0.3), transparent)',
-                                                borderRadius: '0 4px 4px 0'
-                                            }} />
-                                        )}
-
-                                        <span style={{ 
-                                            textOverflow: 'ellipsis', 
-                                            overflow: 'hidden', 
-                                            whiteSpace: 'nowrap',
-                                            position: 'relative',
-                                            zIndex: 1
-                                        }}>
-                                            {track.url ? (
-                                                <>
-                                                    {track.name || `Track ${index + 1}`}
-                                                    {track.loop && ' 🔁'}
-                                                    <span style={{ fontSize: '0.7rem', opacity: 0.8 }}>
-                                                        {' '}({formatTime(track.duration)})
-                                                    </span>
-                                                </>
-                                            ) : (
-                                                `📁 Upload Track ${index + 1}`
-                                            )}
-                                        </span>
-                                    </div>
-                                ))}
-
-                                {audioTracks.length === 0 && (
-                                    <div className="timeline-empty-state">
-                                        <div className="empty-state-content">
-                                            <div className="empty-state-icon">🎚️</div>
-                                            <h5 className="empty-state-title">Ready to create your sound mix?</h5>
-                                            <p className="empty-state-description">
-                                                Click "Add Audio Track" to upload MP3 files and start building your custom soundtrack
-                                            </p>
-                                            <div className="empty-state-features">
-                                                <span>✨ Drag & drop positioning</span>
-                                                <span>🔊 Volume & fade controls</span>
-                                                <span>🔁 Looping support</span>
-                                                <span>⚡ Real-time preview</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
                     </div>
 
                     {/* Track Controls Section */}
                     {audioTracks.length > 0 && (
                         <div className="mixer-section">
                             <h4 className="section-title">🎛️ Track Controls</h4>
-                        <div className="track-controls-list">
+                            <div className="track-controls-list">
                                 {audioTracks.map((track, trackIndex) => (
-                                    <div key={track.id} className="track-control-item">
+                                    <div key={`control-${track.id}-${track.startTime}-${track.duration}`} className="track-control-item">
                                         <div className="track-control-header">
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <div 
+                                                <div
                                                     style={{
                                                         width: '16px',
                                                         height: '16px',
@@ -470,9 +253,9 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                                                     Track {trackIndex + 1}: {track.name || 'Untitled'}
                                                 </span>
                                                 {!track.url && (
-                                                    <span style={{ 
-                                                        fontSize: '0.7rem', 
-                                                        color: '#e74c3c', 
+                                                    <span style={{
+                                                        fontSize: '0.7rem',
+                                                        color: '#e74c3c',
                                                         fontWeight: 'bold',
                                                         background: '#fff5f5',
                                                         padding: '0.25rem 0.5rem',
@@ -500,12 +283,16 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                                             </button>
                                         </div>
 
-                                        <div className="track-controls-grid">
-                                            <div className="control-group" style={{ 
-                                                gridColumn: 'span 2'
-                                            }}>
+                                        <div className="track-controls-layout" style={{
+                                            display: 'grid',
+                                            gridTemplateColumns: '1fr 1fr',
+                                            gap: '1.5rem',
+                                            alignItems: 'start'
+                                        }}>
+                                            {/* Left Side - File Upload */}
+                                            <div className="file-upload-section">
                                                 <div className={`file-upload-container ${!track.url ? 'upload-required' : 'upload-complete'}`}>
-                                                    <label className="control-label upload-label">
+                                                    <label className="control-label upload-label" style={{ marginBottom: '0.5rem', display: 'block' }}>
                                                         {track.url ? '🎵 Audio File:' : '📁 Upload Audio File (Required)'}
                                                     </label>
                                                     <div className="file-input-wrapper">
@@ -517,147 +304,245 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                                                             id={`file-${track.id}`}
                                                             style={{ display: 'none' }}
                                                         />
-                                                        <label 
+                                                        <label
                                                             htmlFor={`file-${track.id}`}
                                                             className={`file-input-label ${track.url ? 'has-file' : 'no-file'}`}
+                                                            style={{
+                                                                display: 'block',
+                                                                padding: '1rem',
+                                                                border: track.url ? '2px solid #27ae60' : '2px dashed #bdc3c7',
+                                                                borderRadius: '8px',
+                                                                backgroundColor: track.url ? '#f8fff8' : '#fafafa',
+                                                                cursor: 'pointer',
+                                                                textAlign: 'center',
+                                                                transition: 'all 0.3s ease'
+                                                            }}
                                                         >
                                                             {track.url ? (
-                                                                <>
-                                                                    <span className="file-name">📂 {track.name}</span>
-                                                                    <span className="change-file">Click to change</span>
-                                                                </>
+                                                                <div>
+                                                                    <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>📂</div>
+                                                                    <div style={{ fontWeight: '500', color: '#27ae60', marginBottom: '0.25rem' }}>{track.name}</div>
+                                                                    <div style={{ fontSize: '0.8rem', color: '#666' }}>Click to change file</div>
+                                                                </div>
                                                             ) : (
-                                                                <>
-                                                                    <span className="upload-icon">⬆️</span>
-                                                                    <span className="upload-text">Click to browse MP3 files</span>
-                                                                </>
+                                                                <div>
+                                                                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>⬆️</div>
+                                                                    <div style={{ fontWeight: '500', color: '#7f8c8d', marginBottom: '0.25rem' }}>Click to browse</div>
+                                                                    <div style={{ fontSize: '0.8rem', color: '#95a5a6' }}>MP3, WAV files supported</div>
+                                                                </div>
                                                             )}
                                                         </label>
                                                     </div>
                                                     {!track.url && (
-                                                        <div className="upload-hint">
-                                                            <small>
-                                                                🎯 Upload an MP3 file to position it on the timeline and mix with scene audio
+                                                        <div className="upload-hint" style={{ marginTop: '0.5rem', textAlign: 'center' }}>
+                                                            <small style={{ color: '#e74c3c', fontStyle: 'italic' }}>
+                                                                🎯 Upload an audio file to configure mixing settings
                                                             </small>
                                                         </div>
                                                     )}
                                                     {track.url && (
-                                                        <div className="file-info">
-                                                            <small>Duration: {formatTime(track.duration)} | Ready to mix!</small>
+                                                        <div className="file-info" style={{ 
+                                                            marginTop: '0.5rem', 
+                                                            padding: '0.5rem',
+                                                            backgroundColor: '#e8f5e8',
+                                                            borderRadius: '6px',
+                                                            textAlign: 'center'
+                                                        }}>
+                                                            <small style={{ color: '#27ae60', fontWeight: '500' }}>
+                                                                ✅ Duration: {formatTime(track.duration)} | Ready to mix!
+                                                            </small>
                                                         </div>
                                                     )}
                                                 </div>
                                             </div>
 
+                                            {/* Right Side - Controls */}
                                             {track.url && (
-                                                <>
-                                                    <div className="control-group">
-                                                        <label className="control-label">Start Time:</label>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                            <input
-                                                                type="number"
-                                                                min="0"
-                                                                max={timelineDuration}
-                                                                step="0.1"
-                                                                value={track.startTime.toFixed(1)}
-                                                                onChange={(e) => updateAudioTrack(track.id, 'startTime', parseFloat(e.target.value))}
-                                                                className="time-input"
-                                                                style={{
-                                                                    width: '80px',
-                                                                    padding: '0.25rem',
-                                                                    border: '1px solid #ddd',
-                                                                    borderRadius: '4px'
-                                                                }}
-                                                            />
-                                                            <span style={{ fontSize: '0.8rem', color: '#666' }}>s</span>
+                                                <div className="controls-section">
+                                                    <div style={{
+                                                        display: 'grid',
+                                                        gap: '1rem',
+                                                        padding: '1rem',
+                                                        backgroundColor: '#f8f9fa',
+                                                        borderRadius: '8px',
+                                                        border: '1px solid #e9ecef'
+                                                    }}>
+                                                        {/* Start Time */}
+                                                        <div className="control-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '0.5rem' }}>
+                                                            <label className="control-label" style={{ 
+                                                                fontSize: '0.9rem', 
+                                                                fontWeight: '600',
+                                                                color: '#495057',
+                                                                margin: 0,
+                                                                minWidth: '85px'
+                                                            }}>
+                                                                ⏱️ Start Time:
+                                                            </label>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    max={originalAudioDuration}
+                                                                    step="0.1"
+                                                                    value={track.startTime.toFixed(1)}
+                                                                    onChange={(e) => updateAudioTrack(track.id, 'startTime', parseFloat(e.target.value))}
+                                                                    className="time-input"
+                                                                    style={{
+                                                                        width: '80px',
+                                                                        padding: '0.5rem',
+                                                                        border: '1px solid #ced4da',
+                                                                        borderRadius: '6px',
+                                                                        fontSize: '0.9rem'
+                                                                    }}
+                                                                />
+                                                                <span style={{ fontSize: '0.8rem', color: '#6c757d' }}>seconds</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Volume */}
+                                                        <div className="control-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '0.5rem' }}>
+                                                            <label className="control-label" style={{ 
+                                                                fontSize: '0.9rem', 
+                                                                fontWeight: '600',
+                                                                color: '#495057',
+                                                                margin: 0,
+                                                                minWidth: '85px'
+                                                            }}>
+                                                                🔊 Volume:
+                                                            </label>
+                                                            <div className="slider-container" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
+                                                                <input
+                                                                    type="range"
+                                                                    className="mixer-slider"
+                                                                    min="0"
+                                                                    max="1"
+                                                                    step="0.05"
+                                                                    value={track.volume}
+                                                                    onChange={(e) => updateAudioTrack(track.id, 'volume', parseFloat(e.target.value))}
+                                                                    style={{
+                                                                        flex: 1,
+                                                                        height: '6px',
+                                                                        borderRadius: '3px',
+                                                                        background: '#e9ecef',
+                                                                        outline: 'none'
+                                                                    }}
+                                                                />
+                                                                <span className="slider-value" style={{ 
+                                                                    minWidth: '45px',
+                                                                    fontSize: '0.9rem',
+                                                                    fontWeight: '500',
+                                                                    color: '#495057'
+                                                                }}>
+                                                                    {Math.round(track.volume * 100)}%
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Fade Controls */}
+                                                        <div className="fade-controls" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '0.5rem' }}>
+                                                                <label className="control-label" style={{ 
+                                                                    fontSize: '0.85rem', 
+                                                                    fontWeight: '600',
+                                                                    color: '#495057',
+                                                                    margin: 0,
+                                                                    minWidth: '60px'
+                                                                }}>
+                                                                    📈 Fade In:
+                                                                </label>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                                                    <input
+                                                                        type="number"
+                                                                        min="0"
+                                                                        max={Math.min(10, track.duration / 2)}
+                                                                        step="0.1"
+                                                                        value={track.fadeIn}
+                                                                        onChange={(e) => updateAudioTrack(track.id, 'fadeIn', parseFloat(e.target.value))}
+                                                                        className="time-input"
+                                                                        style={{
+                                                                            width: '55px',
+                                                                            padding: '0.4rem',
+                                                                            border: '1px solid #ced4da',
+                                                                            borderRadius: '4px',
+                                                                            fontSize: '0.85rem'
+                                                                        }}
+                                                                    />
+                                                                    <span style={{ fontSize: '0.75rem', color: '#6c757d' }}>s</span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '0.5rem' }}>
+                                                                <label className="control-label" style={{ 
+                                                                    fontSize: '0.85rem', 
+                                                                    fontWeight: '600',
+                                                                    color: '#495057',
+                                                                    margin: 0,
+                                                                    minWidth: '65px'
+                                                                }}>
+                                                                    📉 Fade Out:
+                                                                </label>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                                                    <input
+                                                                        type="number"
+                                                                        min="0"
+                                                                        max={Math.min(10, track.duration / 2)}
+                                                                        step="0.1"
+                                                                        value={track.fadeOut}
+                                                                        onChange={(e) => updateAudioTrack(track.id, 'fadeOut', parseFloat(e.target.value))}
+                                                                        className="time-input"
+                                                                        style={{
+                                                                            width: '55px',
+                                                                            padding: '0.4rem',
+                                                                            border: '1px solid #ced4da',
+                                                                            borderRadius: '4px',
+                                                                            fontSize: '0.85rem'
+                                                                        }}
+                                                                    />
+                                                                    <span style={{ fontSize: '0.75rem', color: '#6c757d' }}>s</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Loop Control */}
+                                                        <div className="control-row">
+                                                            <label className="checkbox-label" style={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '0.5rem',
+                                                                fontSize: '0.9rem',
+                                                                fontWeight: '600',
+                                                                color: '#495057',
+                                                                cursor: 'pointer',
+                                                                margin: 0
+                                                            }}>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={track.loop}
+                                                                    onChange={(e) => updateAudioTrack(track.id, 'loop', e.target.checked)}
+                                                                    style={{
+                                                                        margin: 0,
+                                                                        transform: 'scale(1.2)'
+                                                                    }}
+                                                                />
+                                                                <span>🔄 Loop Track</span>
+                                                            </label>
                                                         </div>
                                                     </div>
-
-                                                    <div className="control-group">
-                                                        <label className="control-label">Volume:</label>
-                                                        <div className="slider-container">
-                                                            <input
-                                                                type="range"
-                                                                className="mixer-slider"
-                                                                min="0"
-                                                                max="1"
-                                                                step="0.1"
-                                                                value={track.volume}
-                                                                onChange={(e) => updateAudioTrack(track.id, 'volume', parseFloat(e.target.value))}
-                                                            />
-                                                            <span className="slider-value">{track.volume}</span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="control-group">
-                                                        <label className="control-label">Fade In:</label>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                            <input
-                                                                type="number"
-                                                                min="0"
-                                                                max={Math.min(10, track.duration / 2)}
-                                                                step="0.1"
-                                                                value={track.fadeIn}
-                                                                onChange={(e) => updateAudioTrack(track.id, 'fadeIn', parseFloat(e.target.value))}
-                                                                className="time-input"
-                                                                style={{
-                                                                    width: '60px',
-                                                                    padding: '0.25rem',
-                                                                    border: '1px solid #ddd',
-                                                                    borderRadius: '4px'
-                                                                }}
-                                                            />
-                                                            <span style={{ fontSize: '0.8rem', color: '#666' }}>s</span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="control-group">
-                                                        <label className="control-label">Fade Out:</label>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                            <input
-                                                                type="number"
-                                                                min="0"
-                                                                max={Math.min(10, track.duration / 2)}
-                                                                step="0.1"
-                                                                value={track.fadeOut}
-                                                                onChange={(e) => updateAudioTrack(track.id, 'fadeOut', parseFloat(e.target.value))}
-                                                                className="time-input"
-                                                                style={{
-                                                                    width: '60px',
-                                                                    padding: '0.25rem',
-                                                                    border: '1px solid #ddd',
-                                                                    borderRadius: '4px'
-                                                                }}
-                                                            />
-                                                            <span style={{ fontSize: '0.8rem', color: '#666' }}>s</span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="control-group">
-                                                        <label className="checkbox-label">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={track.loop}
-                                                                onChange={(e) => updateAudioTrack(track.id, 'loop', e.target.checked)}
-                                                            />
-                                                            Loop
-                                                        </label>
-                                                    </div>
-                                                </>
+                                                </div>
                                             )}
                                         </div>
 
                                         {track.url && (
                                             <div style={{ marginTop: '1rem' }}>
-                                                <div style={{ 
-                                                    display: 'flex', 
-                                                    justifyContent: 'space-between', 
+                                                <div style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
                                                     alignItems: 'center',
                                                     marginBottom: '0.5rem'
                                                 }}>
                                                     <label style={{ fontSize: '0.9rem', fontWeight: '500' }}>Preview:</label>
-                                                    <span style={{ 
-                                                        fontSize: '0.8rem', 
+                                                    <span style={{
+                                                        fontSize: '0.8rem',
                                                         color: '#666',
                                                         background: '#f8f9fa',
                                                         padding: '0.25rem 0.5rem',
@@ -666,7 +551,14 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                                                         Duration: {formatTime(track.duration)}
                                                     </span>
                                                 </div>
-                                                <audio controls style={{ width: '100%' }}>
+                                                <audio
+                                                    controls
+                                                    style={{ width: '100%' }}
+                                                    data-track-id={track.id}
+                                                    onLoadedData={(e) => {
+                                                        e.target.volume = track.volume;
+                                                    }}
+                                                >
                                                     <source src={track.url} type="audio/mp3" />
                                                 </audio>
                                             </div>
@@ -688,7 +580,7 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                                         <source src={generatedAudioUrl} type="audio/mp3" />
                                     </audio>
                                 </div>
-                                
+
                                 {previewUrl && (
                                     <div className="mixed-audio" style={{ marginTop: '1rem' }}>
                                         <label>Mixed Audio (Original + Timeline Tracks):</label>
@@ -702,32 +594,147 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                     )}
                 </div>
 
-                <div className="modal-actions">
-                    <button className="reset-button" onClick={resetAllSettings}>
-                        <RotateCcw size={16} />
-                        Clear All Tracks
-                    </button>
-                    
+                <div className="modal-actions" style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: '0.5rem',
+                    alignItems: 'center'
+                }}>
                     <button
-                        className="preview-mix-button"
+                        className="action-button reset-button"
+                        onClick={resetAllSettings}
+                        style={{
+                            background: '#e74c3c',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '0.75rem',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                            fontWeight: '500',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            minWidth: '80px',
+                            height: '44px',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => e.target.style.background = '#c0392b'}
+                        onMouseLeave={(e) => e.target.style.background = '#e74c3c'}
+                    >
+                        <RotateCcw size={16} />
+                        <span>Clear</span>
+                    </button>
+
+                    <button
+                        className="action-button mix-button"
                         onClick={generateMixedAudio}
                         disabled={!generatedAudioUrl || isProcessing || audioTracks.length === 0}
+                        style={{
+                            background: isProcessing || !generatedAudioUrl || audioTracks.length === 0 ? '#95a5a6' : '#3498db',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '0.75rem',
+                            cursor: isProcessing || !generatedAudioUrl || audioTracks.length === 0 ? 'not-allowed' : 'pointer',
+                            fontSize: '0.9rem',
+                            fontWeight: '500',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            minWidth: '80px',
+                            height: '44px',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s ease',
+                            opacity: isProcessing || !generatedAudioUrl || audioTracks.length === 0 ? 0.6 : 1
+                        }}
+                        onMouseEnter={(e) => {
+                            if (!isProcessing && generatedAudioUrl && audioTracks.length > 0) {
+                                e.target.style.background = '#2980b9';
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (!isProcessing && generatedAudioUrl && audioTracks.length > 0) {
+                                e.target.style.background = '#3498db';
+                            }
+                        }}
                     >
                         {isProcessing ? (
                             <>
-                                <div className="spinner" />
-                                <span>Mixing Audio...</span>
+                                <div className="spinner" style={{ width: '16px', height: '16px' }} />
+                                <span>Mix</span>
                             </>
                         ) : (
                             <>
                                 <Volume2 size={16} />
-                                <span>Mix Audio Tracks</span>
+                                <span>Mix</span>
                             </>
                         )}
                     </button>
 
-                    <button className="close-button" onClick={onClose}>
-                        Close
+                    <button
+                        className="action-button accept-finalize-button"
+                        onClick={onClose}
+                        disabled={isProcessing}
+                        style={{
+                            background: isProcessing ? '#95a5a6' : '#27ae60',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '0.75rem',
+                            cursor: isProcessing ? 'not-allowed' : 'pointer',
+                            fontSize: '0.9rem',
+                            fontWeight: '500',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            minWidth: '80px',
+                            height: '44px',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s ease',
+                            opacity: isProcessing ? 0.6 : 1
+                        }}
+                        onMouseEnter={(e) => {
+                            if (!isProcessing) {
+                                e.target.style.background = '#229954';
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (!isProcessing) {
+                                e.target.style.background = '#27ae60';
+                            }
+                        }}
+                    >
+                        <span>✓</span>
+                        <span>Accept</span>
+                    </button>
+
+                    <button
+                        className="action-button close-button"
+                        onClick={onClose}
+                        style={{
+                            background: '#95a5a6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '0.75rem',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                            fontWeight: '500',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            minWidth: '80px',
+                            height: '44px',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => e.target.style.background = '#7f8c8d'}
+                        onMouseLeave={(e) => e.target.style.background = '#95a5a6'}
+                    >
+                        <X size={16} />
+                        <span>Close</span>
                     </button>
                 </div>
             </div>

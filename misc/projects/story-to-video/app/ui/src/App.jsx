@@ -4,9 +4,11 @@ import './App.css';
 import './AnimationModal.css';
 import './ImageGenerationModal.css';
 import SoundMixerModal from './SoundMixerModal';
+import { ToastProvider, useToast } from './Toast';
 
 // Scene Component
 const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, storyId, isAnySceneGenerating, setIsAnySceneGenerating, isMergingFinalVideo, allScenes }) => {
+    const { toast } = useToast();
     const [uploadedImage, setUploadedImage] = useState(null);
     const [audioGenerated, setAudioGenerated] = useState(false);
     const [videoGenerated, setVideoGenerated] = useState(false);
@@ -128,7 +130,7 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
 
     const generateImagePreview = async () => {
         if (!imageGenerationSettings.visualPrompt.trim()) {
-            alert('Please enter a visual prompt first.');
+            toast.warning('Visual Prompt Required', 'Please enter a visual prompt first.');
             return;
         }
 
@@ -211,7 +213,7 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
 
     const autoGenerateVisualPrompt = async () => {
         if (!scene.text?.trim()) {
-            alert('Please add scene text first before auto-generating visual prompt.');
+            toast.warning('Scene Text Required', 'Please add scene text first before auto-generating visual prompt.');
             return;
         }
 
@@ -425,7 +427,10 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
                         storyId: storyId,
                         audioDuration: result.duration
                     });
-                    alert(`Audio generated for Scene ${index + 1}!${voiceSettings}\nStory ID: ${storyId}`);
+                    toast.success(
+                        `Audio Generated Successfully! 🎵`,
+                        `Scene ${index + 1} audio is ready`
+                    );
                 } else {
                     throw new Error(result.error || 'Audio generation failed');
                 }
@@ -434,7 +439,10 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
             }
         } catch (error) {
             console.error('Error generating audio:', error);
-            alert(`Failed to generate audio for Scene ${index + 1}: ${error.message}`);
+            toast.error(
+                `Audio Generation Failed`,
+                `Failed to generate audio for Scene ${index + 1}: ${error.message}`
+            );
         } finally {
             setIsGeneratingAudio(false);
             setIsAnySceneGenerating(false); // Unblock global operations
@@ -480,7 +488,10 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
                         videoDuration: result.duration,
                         animationSettings: videoAnimationSettings
                     });
-                    alert(`Video generated for Scene ${index + 1}!\nAnimation: ${videoAnimationSettings.type}\nStory ID: ${storyId}`);
+                    toast.success(
+                        `Video Generated Successfully! 🎬`,
+                        `Scene ${index + 1} video is ready\nAnimation: ${videoAnimationSettings.type}\nStory ID: ${storyId}`
+                    );
                 } else {
                     throw new Error(result.error || 'Video generation failed');
                 }
@@ -489,7 +500,10 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
             }
         } catch (error) {
             console.error('Error generating video:', error);
-            alert(`Failed to generate video for Scene ${index + 1}: ${error.message}`);
+            toast.error(
+                `Video Generation Failed`,
+                `Failed to generate video for Scene ${index + 1}: ${error.message}`
+            );
         } finally {
             setIsGeneratingVideo(false);
             setIsAnySceneGenerating(false); // Unblock global operations
@@ -498,7 +512,7 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
 
     const showVideoGenerationModal = () => {
         if (!scene.text || !uploadedImage) {
-            alert('Please add both text and image before generating video.');
+            toast.warning('Requirements Missing', 'Please add both text and image before generating video.');
             return;
         }
         setShowAnimationModal(true);
@@ -508,7 +522,7 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
         if (videoGenerated) {
             setShowPreview(true);
         } else {
-            alert('Please generate video first!');
+            toast.info('Video Not Ready', 'Please generate video first!');
         }
     };
 
@@ -1251,7 +1265,8 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
 };
 
 // Main App Component
-function App() {
+function AppContent() {
+    const { toast } = useToast();
     // Helper function to load data from localStorage
     const loadFromLocalStorage = (key, defaultValue) => {
         try {
@@ -1352,7 +1367,7 @@ function App() {
 
     const addScene = () => {
         if (isAnySceneGenerating || isMergingFinalVideo) {
-            alert('Please wait for the current generation to complete before adding a new scene.');
+            toast.warning('Operation In Progress', 'Please wait for the current generation to complete before adding a new scene.');
             return;
         }
         setScenes([...scenes, {
@@ -1373,7 +1388,7 @@ function App() {
 
     const removeScene = (index) => {
         if (isAnySceneGenerating || isMergingFinalVideo) {
-            alert('Please wait for the current generation to complete before removing a scene.');
+            toast.warning('Operation In Progress', 'Please wait for the current generation to complete before removing a scene.');
             return;
         }
         setScenes(scenes.filter((_, i) => i !== index));
@@ -1381,13 +1396,13 @@ function App() {
 
     const mergeFinalVideo = async () => {
         if (isAnySceneGenerating || isMergingFinalVideo) {
-            alert('Please wait for the current generation to complete before merging the final video.');
+            toast.warning('Operation In Progress', 'Please wait for the current generation to complete before merging the final video.');
             return;
         }
 
         const completedScenes = scenes.filter(scene => scene.hasVideo);
         if (completedScenes.length === 0) {
-            alert('Please generate videos for at least one scene first!');
+            toast.warning('No Videos Ready', 'Please generate videos for at least one scene first!');
             return;
         }
 
@@ -1428,13 +1443,20 @@ function App() {
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
 
-                alert(`Final video generated and downloaded successfully! 🎉\nStory ID: ${storyId}\nFile: story_${storyId}_final_video.mp4`);
+                toast.success(
+                    `Final Video Generated Successfully! 🎉`,
+                    `Your story video has been created and downloaded!\nStory ID: ${storyId}\nFile: story_${storyId}_final_video.mp4`,
+                    { duration: 8000 }
+                );
             } else {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
         } catch (error) {
             console.error('Error accumulating final video:', error);
-            alert(`Failed to generate final video: ${error.message}`);
+            toast.error(
+                `Final Video Generation Failed`,
+                `Failed to generate final video: ${error.message}`
+            );
         } finally {
             setIsMergingFinalVideo(false);
             setIsAnySceneGenerating(false);
@@ -1443,7 +1465,7 @@ function App() {
 
     const resetAll = () => {
         if (isAnySceneGenerating || isMergingFinalVideo) {
-            alert('Please wait for the current generation to complete before resetting.');
+            toast.warning('Operation In Progress', 'Please wait for the current generation to complete before resetting.');
             return;
         }
 
@@ -1550,6 +1572,14 @@ function App() {
                 </div>
             </main>
         </div>
+    );
+}
+
+function App() {
+    return (
+        <ToastProvider>
+            <AppContent />
+        </ToastProvider>
     );
 }
 
