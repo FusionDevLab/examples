@@ -1,6 +1,7 @@
 from module.voice import generate_tts
 from module.video import create_video_with_ffmpeg, merge_videos
 from module.image import generate_scene_image
+from module.text import generate_text
 
 import os
 import base64
@@ -77,6 +78,10 @@ class VideoGenerationRequest(BaseModel):
     image: str
     animation: Optional[str] = None
 
+class VisualPromptGenerationRequest(BaseModel):
+    text: str
+    previous_reference: Optional[str] = None
+
 class AccumulateRequest(BaseModel):
     story_id: str
     scenes: list[str]
@@ -102,6 +107,10 @@ class AudioGenerationResponse(BaseModel):
 class VideoGenerationResponse(BaseModel):
     success: bool
     video_url: str
+
+class VisualPromptResponse(BaseModel):
+    success: bool
+    visual_prompt: str
 
 @app.get("/")
 async def root():
@@ -290,6 +299,20 @@ async def generate_video(request: VideoGenerationRequest):
         print(f"Video generation failed: {str(e)}")
         raise HTTPException(
             status_code=500, detail=f"Video generation failed: {str(e)}")
+
+@app.post("/generate/visual/prompt", response_model=VisualPromptResponse)
+async def generate_visual_prompt(request: VisualPromptGenerationRequest):
+    """
+    Generate a visual prompt from a story snippet
+    """
+    visual_prompt = generate_text(
+        prompt=request.text,
+        reference=request.previous_reference
+    )
+    return VisualPromptResponse(
+        success=True,
+        visual_prompt=visual_prompt
+    )
 
 @app.post("/accumulate", response_model=None)
 async def accumulate(request: AccumulateRequest):

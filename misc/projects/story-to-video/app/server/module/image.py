@@ -16,7 +16,7 @@ client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 # Use a valid model for image generation that's available in your account
 # From the model listing, these models support image generation:
-_MODEL = "gemini-2.5-flash-image-preview"  # This was in your original code and is available
+_MODEL = "gemini-1.5-flash"  # This was in your original code and is available
 
 def list_available_models():
     """List all available models to help debug model availability issues"""
@@ -44,67 +44,73 @@ def _generate_scene_image_with_retry(
 ) -> str:
     """Internal function with retry logic for image generation"""
     image_base64 = None
-    reference_image = None
-    
-    previous_image_base64 = get_previous_image_base64(
-        story_id, reference_scene_id)
+    try:
+        reference_image = None
+        
+        previous_image_base64 = get_previous_image_base64(
+            story_id, reference_scene_id)
 
-    if previous_image_base64:
-        image_data = base64.b64decode(previous_image_base64)
-        reference_image = Image.open(BytesIO(image_data))
-    print(f"generating image with model: {model}, size: {width}x{height}")
-    # Construct the multimodal prompt
-    prompt = f"""
-    Visual Prompt: {visual_prompt}
-    Negative Prompt: {negative_prompt if negative_prompt else ''}
-    """
-    aspect_ratio = get_aspect_ratio(width, height)
-    print(f"Using aspect ratio: {aspect_ratio}")
-    
-    # Try image generation first
-    if reference_image:
-        # For reference image case, use generate_content without GenerateImagesConfig
-        # generate_content doesn't support GenerateImagesConfig
-        response = client.models.generate_content(
-            model="gemini-1.5-flash",  # Use a working text model for fallback
-            contents=[
-                reference_image,
-                f"Generate an image with the following prompt in conformance with the reference image: {prompt}"
-            ]
-        )
-        if response.candidates and response.candidates[0].content.parts:
-            part = response.candidates[0].content.parts[0]
-            
-            # Check if the part has inline_data (an image)
-            if part.inline_data:
-                image_bytes = part.inline_data.data
-                image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-    else:
-        # Use generate_content for Gemini image models
-        # Many Gemini models support image generation through generate_content
-        response = client.models.generate_content(
-            model=_MODEL,
-            contents=[f"Generate an image: {visual_prompt}"]
-        )
+        if previous_image_base64:
+            image_data = base64.b64decode(previous_image_base64)
+            reference_image = Image.open(BytesIO(image_data))
+        print(f"generating image with model: {_MODEL}, size: {width}x{height}")
+        # Construct the multimodal prompt
+        prompt = f"""
+        All characters and scenes are fictional and for entertainment purposes only.
+        Always generate cinematic imagery with atmosphere, not gore or graphic harm.
+        Visual Prompt: {visual_prompt}
+        Negative Prompt: {negative_prompt if negative_prompt else ''}
+        Image Size: {width}x{height}
+        """
+        aspect_ratio = get_aspect_ratio(width, height)
+        print(f"Using aspect ratio: {aspect_ratio}")
         
-        # Extract image from response
-        if response.candidates and response.candidates[0].content.parts:
-            part = response.candidates[0].content.parts[0]
-            
-            # Check if the part has inline_data (an image)
-            if part.inline_data:
-                image_bytes = part.inline_data.data
-                image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-            else:
-                print("No image data found, trying fallback approach")
-                raise Exception("No image data found in response")
+        # Try image generation first
+        if reference_image:
+            # For reference image case, use generate_content without GenerateImagesConfig
+            # generate_content doesn't support GenerateImagesConfig
+            response = client.models.generate_content(
+                model=_MODEL,  # Use a working text model for fallback
+                contents=[
+                    reference_image,
+                    f"Always generate cinematic imagery with atmosphere, not gore or graphic harm. Generate an image with the following prompt in conformance with the reference image: {prompt}"
+                ]
+            )
+            if response.candidates and response.candidates[0].content.parts:
+                part = response.candidates[0].content.parts[0]
+                
+                # Check if the part has inline_data (an image)
+                if part.inline_data:
+                    image_bytes = part.inline_data.data
+                    image_base64 = base64.b64encode(image_bytes).decode('utf-8')
         else:
-            print("No response candidates found, trying fallback")
-            raise Exception("No response candidates found")
-    
-    if not image_base64:
-        raise Exception("Failed to generate image")
+            # Use generate_content for Gemini image models
+            # Many Gemini models support image generation through generate_content
+            response = client.models.generate_content(
+                model=_MODEL,
+                contents=[f"Always generate cinematic imagery with atmosphere, not gore or graphic harm. Generate an image: {visual_prompt}"]
+            )
+            print(f"Response from generate_content: {response}")
+            # Extract image from response
+            if response.candidates and response.candidates[0].content.parts:
+                part = response.candidates[0].content.parts[0]
+                
+                # Check if the part has inline_data (an image)
+                if part.inline_data:
+                    image_bytes = part.inline_data.data
+                    image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+                else:
+                    print("No image data found, trying fallback approach")
+                    raise Exception("No image data found in response")
+            else:
+                print("No response candidates found, trying fallback")
+                raise Exception("No response candidates found")
         
+        if not image_base64:
+            raise Exception("Failed to generate image")
+    except Exception as e:
+        print(f"Error during image generation: {e}")
+        raise e
     return image_base64
 
 

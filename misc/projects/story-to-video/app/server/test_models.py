@@ -7,7 +7,7 @@ import os
 from google import genai
 
 # Initialize client with your API key
-client = genai.Client(api_key="AIzaSyDC094CEM5DS3-7qBLeDzAlUZTYZY-XhVw")
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 def list_all_models():
     """List all available models with their capabilities"""
@@ -93,7 +93,9 @@ if __name__ == "__main__":
         "imagen-3.0-generate-001",
         "imagen-2.0-generate-001", 
         "gemini-1.5-pro-latest",
-        "gemini-1.5-flash-latest"
+        "gemini-1.5-flash-latest",
+        "gemini-2.5-flash-image-preview",
+        "gemini-2.0-flash-preview-image-generation"
     ]
     
     print("\n" + "="*80)

@@ -25,7 +25,8 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
         height: 720,
         selectedSceneImage: null,
         generatedPreview: null,
-        isGenerating: false
+        isGenerating: false,
+        isGeneratingPrompt: false
     });
     const [animationSettings, setAnimationSettings] = useState({
         type: 'Ken Burns',
@@ -185,8 +186,61 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
                 ...prev,
                 generatedPreview: null,
                 visualPrompt: '',
-                selectedSceneImage: null
+                selectedSceneImage: null,
+                isGeneratingPrompt: false
             }));
+        }
+    };
+
+    const autoGenerateVisualPrompt = async () => {
+        if (!scene.text?.trim()) {
+            alert('Please add scene text first before auto-generating visual prompt.');
+            return;
+        }
+
+        try {
+            updateImageGenerationSetting('isGeneratingPrompt', true);
+            
+            // Get previous scene text for reference
+            let previousReference = '';
+            if (index > 0 && allScenes && allScenes[index - 1]?.text) {
+                previousReference = allScenes[index - 1].text;
+            }
+
+            const response = await fetch('http://localhost:8000/generate/visual/prompt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    text: scene.text,
+                    previous_reference: previousReference
+                })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.visual_prompt) {
+                    updateImageGenerationSetting('visualPrompt', result.visual_prompt);
+                } else {
+                    throw new Error(result.error || 'Failed to generate visual prompt');
+                }
+            } else {
+                // For demo purposes, create a simple visual prompt
+                const sceneType = scene.text.toLowerCase().includes('night') ? 'night scene' : 
+                                 scene.text.toLowerCase().includes('day') ? 'daytime scene' : 'scene';
+                const generatedPrompt = `A cinematic ${sceneType} depicting: ${scene.text.substring(0, 100)}${previousReference ? `. Continuing from previous context: ${previousReference.substring(0, 50)}...` : ''}. High quality, detailed, professional photography style.`;
+                updateImageGenerationSetting('visualPrompt', generatedPrompt);
+            }
+        } catch (error) {
+            console.error('Error generating visual prompt:', error);
+            // Fallback to basic prompt generation
+            const sceneType = scene.text.toLowerCase().includes('night') ? 'night scene' : 
+                             scene.text.toLowerCase().includes('day') ? 'daytime scene' : 'scene';
+            const fallbackPrompt = `A cinematic ${sceneType} depicting: ${scene.text.substring(0, 100)}. High quality, detailed, professional photography style.`;
+            updateImageGenerationSetting('visualPrompt', fallbackPrompt);
+        } finally {
+            updateImageGenerationSetting('isGeneratingPrompt', false);
         }
     };
 
@@ -917,6 +971,33 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
                                         onChange={(e) => updateImageGenerationSetting('visualPrompt', e.target.value)}
                                         rows={4}
                                     />
+                                    <button
+                                        className="auto-generate-prompt-button"
+                                        onClick={autoGenerateVisualPrompt}
+                                        disabled={!scene.text?.trim() || imageGenerationSettings.isGeneratingPrompt}
+                                        style={{
+                                            marginTop: '0.5rem',
+                                            padding: '0.5rem',
+                                            backgroundColor: '#4a9eff',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            cursor: imageGenerationSettings.isGeneratingPrompt ? 'not-allowed' : 'pointer',
+                                            opacity: imageGenerationSettings.isGeneratingPrompt ? 0.6 : 1,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            width: '36px',
+                                            height: '36px'
+                                        }}
+                                        title="Auto-generate visual prompt from scene text"
+                                    >
+                                        {imageGenerationSettings.isGeneratingPrompt ? (
+                                            <div className="spinner" />
+                                        ) : (
+                                            <Wand2 size={16} />
+                                        )}
+                                    </button>
                                 </div>
 
                                 {/* Negative Prompt */}
