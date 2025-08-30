@@ -230,6 +230,146 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                                 </button>
                             </div>
                         </div>
+
+                        {/* Timeline Ruler */}
+                        <div className="timeline-ruler" style={{
+                            marginBottom: '1.5rem',
+                            padding: '1rem',
+                            backgroundColor: '#f8f9fa',
+                            borderRadius: '8px',
+                            border: '1px solid #e9ecef'
+                        }}>
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                marginBottom: '0.5rem'
+                            }}>
+                                <span style={{
+                                    fontSize: '0.9rem',
+                                    fontWeight: '600',
+                                    color: '#495057'
+                                }}>
+                                    📏 Timeline (seconds)
+                                </span>
+                            </div>
+                            <div className="ruler-container" style={{
+                                position: 'relative',
+                                height: '40px',
+                                background: 'linear-gradient(to bottom, #ffffff, #f8f9fa)',
+                                border: '1px solid #dee2e6',
+                                borderRadius: '4px',
+                                overflow: 'hidden'
+                            }}>
+                                {/* Ruler marks and labels */}
+                                <div className="ruler-marks" style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    display: 'flex',
+                                    alignItems: 'flex-end'
+                                }}>
+                                    {(() => {
+                                        const maxTime = originalAudioDuration + 10;
+                                        const marks = [];
+                                        const step = maxTime > 60 ? 10 : maxTime > 30 ? 5 : 1;
+                                        
+                                        for (let time = 0; time <= maxTime; time += step) {
+                                            const leftPercent = (time / maxTime) * 100;
+                                            const isMainMark = time % (step * 2) === 0;
+                                            
+                                            marks.push(
+                                                <div
+                                                    key={time}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        left: `${leftPercent}%`,
+                                                        bottom: 0,
+                                                        width: '1px',
+                                                        height: isMainMark ? '20px' : '10px',
+                                                        backgroundColor: isMainMark ? '#495057' : '#adb5bd',
+                                                        transform: 'translateX(-50%)'
+                                                    }}
+                                                />
+                                            );
+                                            
+                                            if (isMainMark) {
+                                                // Adjust transform for edge labels to prevent truncation
+                                                let transform = 'translateX(-50%)';
+                                                if (time === 0) {
+                                                    transform = 'translateX(0)'; // Left align first label
+                                                } else if (time === maxTime) {
+                                                    transform = 'translateX(-100%)'; // Right align last label
+                                                }
+                                                
+                                                marks.push(
+                                                    <div
+                                                        key={`label-${time}`}
+                                                        style={{
+                                                            position: 'absolute',
+                                                            left: `${leftPercent}%`,
+                                                            bottom: '22px',
+                                                            transform: transform,
+                                                            fontSize: '0.75rem',
+                                                            color: '#495057',
+                                                            fontWeight: '500',
+                                                            whiteSpace: 'nowrap',
+                                                            minWidth: '30px',
+                                                            textAlign: time === 0 ? 'left' : time === maxTime ? 'right' : 'center'
+                                                        }}
+                                                    >
+                                                        {formatTime(time)}
+                                                    </div>
+                                                );
+                                            }
+                                        }
+                                        
+                                        // Add scene duration indicator
+                                        const sceneDurationPercent = (originalAudioDuration / maxTime) * 100;
+                                        marks.push(
+                                            <div
+                                                key="scene-duration-line"
+                                                style={{
+                                                    position: 'absolute',
+                                                    left: `${sceneDurationPercent}%`,
+                                                    top: 0,
+                                                    bottom: 0,
+                                                    width: '2px',
+                                                    backgroundColor: '#e74c3c',
+                                                    transform: 'translateX(-50%)',
+                                                    zIndex: 2
+                                                }}
+                                            />
+                                        );
+                                        
+                                        marks.push(
+                                            <div
+                                                key="scene-duration-label"
+                                                style={{
+                                                    position: 'absolute',
+                                                    left: `${sceneDurationPercent}%`,
+                                                    top: '-5px',
+                                                    transform: 'translateX(-50%)',
+                                                    fontSize: '0.7rem',
+                                                    color: '#e74c3c',
+                                                    fontWeight: '700',
+                                                    backgroundColor: '#fff5f5',
+                                                    padding: '0.125rem 0.25rem',
+                                                    borderRadius: '3px',
+                                                    border: '1px solid #fecaca',
+                                                    whiteSpace: 'nowrap'
+                                                }}
+                                            >
+                                                🎤 Scene End
+                                            </div>
+                                        );
+                                        
+                                        return marks;
+                                    })()}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Track Controls Section */}
