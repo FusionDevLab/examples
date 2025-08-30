@@ -325,6 +325,26 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                                             }
                                         }
                                         
+                                        // Add original track visualization bar
+                                        const originalTrackPercent = (originalAudioDuration / maxTime) * 100;
+                                        marks.push(
+                                            <div
+                                                key="original-track-bar"
+                                                style={{
+                                                    position: 'absolute',
+                                                    left: '0%',
+                                                    top: '5px',
+                                                    width: `${originalTrackPercent}%`,
+                                                    height: '30px',
+                                                    backgroundColor: '#3498db',
+                                                    opacity: 0.5,
+                                                    borderRadius: '2px',
+                                                    zIndex: 1,
+                                                    border: '1px solid #2980b9'
+                                                }}
+                                            />
+                                        );
+                                        
                                         // Add scene duration indicator
                                         const sceneDurationPercent = (originalAudioDuration / maxTime) * 100;
                                         marks.push(
