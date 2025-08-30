@@ -41,6 +41,21 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
         yOffset: 0
     });
 
+    // Restore state from persisted scene data (localStorage)
+    useEffect(() => {
+        if (scene.image) {
+            setUploadedImage(scene.image);
+        }
+        if (scene.hasAudio) {
+            setAudioGenerated(true);
+            setGeneratedAudioUrl(scene.audioUrl || null);
+        }
+        if (scene.hasVideo) {
+            setVideoGenerated(true);
+            setGeneratedVideoUrl(scene.videoUrl || null);
+        }
+    }, [scene.id, scene.image, scene.hasAudio, scene.hasVideo, scene.audioUrl, scene.videoUrl]);
+
     const handleTextChange = (e) => {
         onUpdate(index, { ...scene, text: e.target.value });
     };
@@ -1237,14 +1252,74 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
 
 // Main App Component
 function App() {
-    const [scenes, setScenes] = useState([]);
+    // Helper function to load data from localStorage
+    const loadFromLocalStorage = (key, defaultValue) => {
+        try {
+            const saved = localStorage.getItem(key);
+            if (saved) {
+                return JSON.parse(saved);
+            }
+        } catch (error) {
+            console.warn('Error loading from localStorage:', error);
+        }
+        return defaultValue;
+    };
+
+    // Helper function to save data to localStorage
+    const saveToLocalStorage = (key, data) => {
+        try {
+            localStorage.setItem(key, JSON.stringify(data));
+        } catch (error) {
+            console.warn('Error saving to localStorage:', error);
+        }
+    };
+
+    // Initialize state with localStorage data
+    const [scenes, setScenesState] = useState(() => loadFromLocalStorage('storyline-studio-scenes', []));
     const [isAnySceneGenerating, setIsAnySceneGenerating] = useState(false);
     const [isMergingFinalVideo, setIsMergingFinalVideo] = useState(false);
-    const [voiceInstructions, setVoiceInstructions] = useState('🎙️ Narration Instruction (Adaptive Delivery)\n\nAccent: Neutral Indian English, clear and grounded.\n\nTone: Serious, but with subtle shifts — reflective at the start, energetic in the middle, then darker toward the end.\n\nMood: Gloomy undertone throughout, but with sparks of energy that echo his fleeting highs.\n\nDelivery Flow (per story beat):\n\nOpening (reflective, steady pace)\n"Interviews, fan messages, and public appearances filled his days."\n→ Calm, matter-of-fact, almost weary.\n\n"Initially, he responded to fans, humble and grateful."\n→ Gentle, softened voice, slower.\n\nRising Admiration (quicker, more engaged)\n"He felt alive, powerful, adored. He reveled in praise, each view and comment inflating his pride. Even small compliments felt like treasures."\n→ Increase pacing slightly, add a touch of brightness in tone — but not joyous, rather intoxicated.\n\nThe High (confident, energetic rhythm)\n"The world seemed to obey him. Music flowed effortlessly. The feeling was intoxicating."\n→ Crisp delivery, medium-fast pace, a hint of wonder — but with a shadow underneath.\n\nThe Shift (slower, darker again)\n"He started imagining bigger dreams, larger stages, more recognition."\n→ Slight pause between phrases, like ambition swelling.\n\n"For a while, life felt perfect, magical, unstoppable."\n→ Deliver with restrained intensity — the pace slows, voice lowers at "unstoppable," foreshadowing collapse.\n\n⚖️ Overall rhythm: Not monotone slow — instead, it rises with his pride and falls back into gloom, mirroring the story arc.');
-    const [storyId, setStoryId] = useState(() => {
-        // Generate a unique story ID when the component first loads
-        return `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const [voiceInstructions, setVoiceInstructionsState] = useState(() => 
+        loadFromLocalStorage('storyline-studio-voice-instructions', 
+            '🎙️ Narration Instruction (Adaptive Delivery)\n\nAccent: Neutral Indian English, clear and grounded.\n\nTone: Serious, but with subtle shifts — reflective at the start, energetic in the middle, then darker toward the end.\n\nMood: Gloomy undertone throughout, but with sparks of energy that echo his fleeting highs.\n\nDelivery Flow (per story beat):\n\nOpening (reflective, steady pace)\n"Interviews, fan messages, and public appearances filled his days."\n→ Calm, matter-of-fact, almost weary.\n\n"Initially, he responded to fans, humble and grateful."\n→ Gentle, softened voice, slower.\n\nRising Admiration (quicker, more engaged)\n"He felt alive, powerful, adored. He reveled in praise, each view and comment inflating his pride. Even small compliments felt like treasures."\n→ Increase pacing slightly, add a touch of brightness in tone — but not joyous, rather intoxicated.\n\nThe High (confident, energetic rhythm)\n"The world seemed to obey him. Music flowed effortlessly. The feeling was intoxicating."\n→ Crisp delivery, medium-fast pace, a hint of wonder — but with a shadow underneath.\n\nThe Shift (slower, darker again)\n"He started imagining bigger dreams, larger stages, more recognition."\n→ Slight pause between phrases, like ambition swelling.\n\n"For a while, life felt perfect, magical, unstoppable."\n→ Deliver with restrained intensity — the pace slows, voice lowers at "unstoppable," foreshadowing collapse.\n\n⚖️ Overall rhythm: Not monotone slow — instead, it rises with his pride and falls back into gloom, mirroring the story arc.'
+        )
+    );
+    const [storyId, setStoryIdState] = useState(() => {
+        // Load storyId from localStorage or generate a new one
+        const existingId = loadFromLocalStorage('storyline-studio-story-id', null);
+        if (existingId) {
+            return existingId;
+        } else {
+            const newId = `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            saveToLocalStorage('storyline-studio-story-id', newId);
+            return newId;
+        }
     });
+
+    // Wrapper function to save storyId to localStorage when it changes
+    const setStoryId = (newStoryId) => {
+        setStoryIdState(newStoryId);
+        saveToLocalStorage('storyline-studio-story-id', newStoryId);
+    };
+
+    // Wrapper functions to save to localStorage when state changes
+    const setScenes = (newScenes) => {
+        if (typeof newScenes === 'function') {
+            // Handle functional updates
+            setScenesState(prevScenes => {
+                const updatedScenes = newScenes(prevScenes);
+                saveToLocalStorage('storyline-studio-scenes', updatedScenes);
+                return updatedScenes;
+            });
+        } else {
+            setScenesState(newScenes);
+            saveToLocalStorage('storyline-studio-scenes', newScenes);
+        }
+    };
+
+    const setVoiceInstructions = (newInstructions) => {
+        setVoiceInstructionsState(newInstructions);
+        saveToLocalStorage('storyline-studio-voice-instructions', newInstructions);
+    };
 
     // Initialize story with server when component mounts
     useEffect(() => {
@@ -1376,7 +1451,13 @@ function App() {
             setScenes([]);
             setVoiceInstructions('🎙️ Narration Instruction (Adaptive Delivery)\n\nAccent: Neutral Indian English, clear and grounded.\n\nTone: Serious, but with subtle shifts — reflective at the start, energetic in the middle, then darker toward the end.\n\nMood: Gloomy undertone throughout, but with sparks of energy that echo his fleeting highs.\n\nDelivery Flow (per story beat):\n\nOpening (reflective, steady pace)\n"Interviews, fan messages, and public appearances filled his days."\n→ Calm, matter-of-fact, almost weary.\n\n"Initially, he responded to fans, humble and grateful."\n→ Gentle, softened voice, slower.\n\nRising Admiration (quicker, more engaged)\n"He felt alive, powerful, adored. He reveled in praise, each view and comment inflating his pride. Even small compliments felt like treasures."\n→ Increase pacing slightly, add a touch of brightness in tone — but not joyous, rather intoxicated.\n\nThe High (confident, energetic rhythm)\n"The world seemed to obey him. Music flowed effortlessly. The feeling was intoxicating."\n→ Crisp delivery, medium-fast pace, a hint of wonder — but with a shadow underneath.\n\nThe Shift (slower, darker again)\n"He started imagining bigger dreams, larger stages, more recognition."\n→ Slight pause between phrases, like ambition swelling.\n\n"For a while, life felt perfect, magical, unstoppable."\n→ Deliver with restrained intensity — the pace slows, voice lowers at "unstoppable," foreshadowing collapse.\n\n⚖️ Overall rhythm: Not monotone slow — instead, it rises with his pride and falls back into gloom, mirroring the story arc.');
             // Generate a new story ID on reset
-            setStoryId(`story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+            const newStoryId = `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            setStoryId(newStoryId);
+            // Clear localStorage data
+            localStorage.removeItem('storyline-studio-scenes');
+            localStorage.removeItem('storyline-studio-voice-instructions');
+            localStorage.removeItem('storyline-studio-story-id');
+            saveToLocalStorage('storyline-studio-story-id', newStoryId);
         }
     };
 
