@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ImagePlus, Mic, Film, PlayCircle, PlusCircle, Trash2, X, Video, FileVideo, ChevronDown, ChevronUp, Wand2, Eye, Check } from 'lucide-react';
+import { ImagePlus, Mic, Film, PlayCircle, PlusCircle, Trash2, X, Video, FileVideo, ChevronDown, ChevronUp, Wand2, Eye, Check, Settings } from 'lucide-react';
 import './App.css';
 import './AnimationModal.css';
 import './ImageGenerationModal.css';
+import SoundMixerModal from './SoundMixerModal';
 
 // Scene Component
 const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, storyId, isAnySceneGenerating, setIsAnySceneGenerating, isMergingFinalVideo, allScenes }) => {
@@ -17,6 +18,7 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [showAnimationModal, setShowAnimationModal] = useState(false);
     const [showImageGenerationModal, setShowImageGenerationModal] = useState(false);
+    const [showSoundMixerModal, setShowSoundMixerModal] = useState(false);
     const [imageGenerationSettings, setImageGenerationSettings] = useState({
         visualPrompt: '',
         negativePrompt: 'blurry, low quality, distorted, watermark, text, signature',
@@ -631,6 +633,34 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
                                 <PlayCircle size={20} />
                                 <span>Preview</span>
                             </button>
+
+                            <button
+                                className="control-button sound-mixer-button"
+                                onClick={() => setShowSoundMixerModal(true)}
+                                title="Sound Mixer (Experimental)"
+                                disabled={!audioGenerated || isGeneratingAudio || isGeneratingVideo || isAnySceneGenerating || isMergingFinalVideo}
+                                style={{ 
+                                    background: 'linear-gradient(135deg, #9b59b6, #8e44ad)',
+                                    position: 'relative',
+                                    overflow: 'hidden'
+                                }}
+                            >
+                                <Settings size={18} />
+                                <span>Sound Mixer</span>
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '-2px',
+                                    right: '-2px',
+                                    background: '#e74c3c',
+                                    color: 'white',
+                                    fontSize: '0.6rem',
+                                    padding: '1px 4px',
+                                    borderRadius: '3px',
+                                    fontWeight: 'bold'
+                                }}>
+                                    BETA
+                                </div>
+                            </button>
                         </div>
 
                         {uploadedImage && (
@@ -1191,6 +1221,16 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
                     </div>
                 </div>
             )}
+
+            {/* Sound Mixer Modal */}
+            <SoundMixerModal
+                show={showSoundMixerModal}
+                onClose={() => setShowSoundMixerModal(false)}
+                scene={scene}
+                index={index}
+                storyId={storyId}
+                generatedAudioUrl={generatedAudioUrl}
+            />
         </>
     );
 };
