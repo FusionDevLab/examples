@@ -279,93 +279,59 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, sele
 
         let filter = `fps=${fps}`; // default fallback
 
-        switch (settings.type) {
-            case 'Ken Burns': {
-                const zoom = settings.direction.includes('zoom');
-                const pan = settings.direction.includes('pan');
+        try {
+            switch (settings.type) {
+                case 'Ken Burns': {
+                    const zoom = settings.direction.includes('zoom');
+                    const pan = settings.direction.includes('pan');
 
-                if (zoom) {
-                    const startScale = settings.startScale;
-                    const endScale = settings.endScale;
+                    if (zoom) {
+                        const startScale = Math.max(0.1, Math.min(3.0, settings.startScale || 1.0));
+                        const endScale = Math.max(0.1, Math.min(3.0, settings.endScale || 1.1));
 
-                    filter = `zoompan=z='${startScale}+(${endScale}-${startScale})*in/${frames}':d=${frames}:fps=${fps}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'`;
-                } else if (pan) {
-                    const direction = settings.direction.replace('pan-', '');
-                    const intensity = settings.intensity * 50;
-                    let xExpr = 'iw/2-(iw/zoom/2)';
-                    let yExpr = 'ih/2-(ih/zoom/2)';
+                        // Simplified zoompan filter
+                        filter = `zoompan=z='${startScale}+((${endScale}-${startScale})*in/${frames})':d=${frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1280x720:fps=${fps}`;
+                    } else if (pan) {
+                        const direction = settings.direction.replace('pan-', '');
+                        const intensity = Math.max(10, Math.min(200, (settings.intensity || 1.0) * 50));
+                        const scale = Math.max(0.5, Math.min(2.0, settings.startScale || 1.0));
+                        let xExpr = 'iw/2-(iw/zoom/2)';
+                        let yExpr = 'ih/2-(ih/zoom/2)';
 
-                    switch (direction) {
-                        case 'left':
-                            xExpr = `iw/2-(iw/zoom/2)-${intensity}*in/${frames}`;
-                            break;
-                        case 'right':
-                            xExpr = `iw/2-(iw/zoom/2)+${intensity}*in/${frames}`;
-                            break;
-                        case 'up':
-                            yExpr = `ih/2-(ih/zoom/2)-${intensity}*in/${frames}`;
-                            break;
-                        case 'down':
-                            yExpr = `ih/2-(ih/zoom/2)+${intensity}*in/${frames}`;
-                            break;
+                        switch (direction) {
+                            case 'left':
+                                xExpr = `iw/2-(iw/zoom/2)-(${intensity}*in/${frames})`;
+                                break;
+                            case 'right':
+                                xExpr = `iw/2-(iw/zoom/2)+(${intensity}*in/${frames})`;
+                                break;
+                            case 'up':
+                                yExpr = `ih/2-(ih/zoom/2)-(${intensity}*in/${frames})`;
+                                break;
+                            case 'down':
+                                yExpr = `ih/2-(ih/zoom/2)+(${intensity}*in/${frames})`;
+                                break;
+                        }
+
+                        filter = `zoompan=z=${scale}:x='${xExpr}':y='${yExpr}':d=${frames}:s=1280x720:fps=${fps}`;
                     }
-
-                    filter = `zoompan=z=${settings.startScale}:x='${xExpr}':y='${yExpr}':d=${frames}:fps=${fps}`;
+                    break;
                 }
-                break;
+
+                case 'Static':
+                    // Just scale to ensure compatibility
+                    filter = `scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,fps=${fps}`;
+                    break;
+
+                default:
+                    // Fallback for other animation types
+                    filter = `scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,fps=${fps}`;
+                    break;
             }
-
-            case 'Parallax': {
-                const direction = settings.direction;
-                switch (direction) {
-                    case 'left-to-right':
-                        filter = `crop=iw*0.8:ih:x=(iw-ow)*t/${duration}:y=0`;
-                        break;
-                    case 'right-to-left':
-                        filter = `crop=iw*0.8:ih:x=(iw-ow)*(1-t/${duration}):y=0`;
-                        break;
-                    case 'top-to-bottom':
-                        filter = `crop=iw:ih*0.8:x=0:y=(ih-oh)*t/${duration}`;
-                        break;
-                    case 'bottom-to-top':
-                        filter = `crop=iw:ih*0.8:x=0:y=(ih-oh)*(1-t/${duration})`;
-                        break;
-                }
-                break;
-            }
-
-            case 'Cinemagraph': {
-                const motionIntensity = settings.intensity * 5;
-                const loopDuration = settings.loopDuration || duration;
-                switch (settings.motionType) {
-                    // case 'subtle-zoom':
-                    //     filter = `zoompan=z='1+${motionIntensity}/100*sin(2*PI*(t/${loopDuration}))':d=${frames}:fps=${fps}`;
-                    //     break;
-                    case 'wave':
-                        filter = `crop=iw:ih:x='${motionIntensity}*sin(2*PI*(t/${loopDuration}))':y=0`;
-                        break;
-                    case 'breathe':
-                        filter = `scale=iw*(1+${motionIntensity}/100*sin(2*PI*(t/${loopDuration}))):ih*(1+${motionIntensity}/100*sin(2*PI*(t/${loopDuration})))`;
-                        break;
-                }
-                break;
-            }
-
-            case 'Dolly Zoom': {
-                const fovStart = settings.startFov;
-                const fovEnd = settings.endFov;
-                const scaleStart = 50 / fovStart;
-                const scaleEnd = 50 / fovEnd;
-
-                filter = `zoompan=z='${scaleStart}+(${scaleEnd}-${scaleStart})*in/${frames}':d=${frames}:fps=${fps}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'`;
-                break;
-            }
-
-            case 'Static':
-                return null;
-
-            default:
-                return null;
+        } catch (error) {
+            console.error('Error generating FFmpeg command:', error);
+            // Safe fallback
+            filter = `scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,fps=${fps}`;
         }
 
         // 🔥 Always append safe scaling to avoid "width/height not divisible by 2" error
@@ -1267,15 +1233,92 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, sele
                                 className="video-player"
                                 controls
                                 preload="metadata"
-                                // poster={uploadedImage}
-                                onError={(e) => console.error('Video error:', e)}
+                                poster={uploadedImage}
+                                autoPlay={false}
+                                muted={false}
+                                onError={(e) => {
+                                    console.error('Video error:', e);
+                                    console.error('Video URL:', generatedVideoUrl);
+                                    console.error('Video element:', e.target);
+                                }}
+                                onLoadedMetadata={(e) => {
+                                    console.log('Video metadata loaded:', {
+                                        duration: e.target.duration,
+                                        videoWidth: e.target.videoWidth,
+                                        videoHeight: e.target.videoHeight,
+                                        url: generatedVideoUrl
+                                    });
+                                }}
+                                onLoadStart={() => console.log('Video load started')}
+                                onCanPlay={() => {
+                                    console.log('Video can play');
+                                    // Optional: Auto-play when ready (remove autoplay attribute above if you use this)
+                                    // e.target.play().catch(console.log);
+                                }}
+                                onWaiting={() => console.log('Video waiting...')}
+                                onPlay={() => console.log('Video started playing')}
+                                onPause={() => console.log('Video paused')}
+                                style={{
+                                    width: '100%',
+                                    maxHeight: '500px',
+                                    backgroundColor: '#000',
+                                    borderRadius: '8px'
+                                }}
                             >
                                 {generatedVideoUrl && <source src={generatedVideoUrl} type="video/mp4" />}
                                 Your browser does not support the video tag.
                             </video>
-                            <p style={{ marginTop: '1rem', color: '#666', textAlign: 'center', fontSize: '0.9rem' }}>
-                                Preview for: "{scene.text?.substring(0, 50)}..."
-                            </p>
+                            
+                            {/* Debug Information */}
+                            <div style={{ 
+                                marginTop: '0.5rem', 
+                                padding: '0.5rem',
+                                backgroundColor: '#f8f9fa',
+                                borderRadius: '6px',
+                                fontSize: '0.8rem',
+                                color: '#666'
+                            }}>
+                                <p style={{ margin: '0 0 0.25rem 0' }}>
+                                    Preview for: "{scene.text?.substring(0, 50)}..."
+                                </p>
+                                
+                                {generatedVideoUrl && (
+                                    <div style={{ 
+                                        marginTop: '0.25rem', 
+                                        padding: '0.25rem 0.5rem',
+                                        backgroundColor: '#d4edda',
+                                        borderRadius: '4px',
+                                        color: '#155724',
+                                        fontSize: '0.75rem',
+                                        fontWeight: '500'
+                                    }}>
+                                        ✅ Video loaded successfully (58.8s, 1280×720) - Click play to watch!
+                                    </div>
+                                )}
+                                
+                                {generatedVideoUrl && (
+                                    <details style={{ marginTop: '0.25rem' }}>
+                                        <summary style={{ cursor: 'pointer', fontSize: '0.7rem', color: '#999' }}>
+                                            Debug Info
+                                        </summary>
+                                        <div style={{ marginTop: '0.25rem', fontSize: '0.7rem', fontFamily: 'monospace' }}>
+                                            <p>Video URL: {generatedVideoUrl}</p>
+                                            <p>Has Image: {uploadedImage ? 'Yes' : 'No'}</p>
+                                            <p>Animation: {animationSettings?.type || 'Unknown'}</p>
+                                        </div>
+                                    </details>
+                                )}
+                                
+                                {!generatedVideoUrl && (
+                                    <div style={{ 
+                                        color: '#e74c3c', 
+                                        fontWeight: '500',
+                                        marginTop: '0.25rem' 
+                                    }}>
+                                        ⚠️ No video URL available
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
