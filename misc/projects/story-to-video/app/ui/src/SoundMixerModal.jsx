@@ -467,7 +467,7 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                             <h4 className="section-title">🎛️ Track Controls</h4>
                             <div className="track-controls-list">
                                 {audioTracks.map((track, trackIndex) => (
-                                    <div key={`control-${track.id}-${track.startTime}-${track.duration}`} className="track-control-item">
+                                    <div key={`control-${track.id}`} className="track-control-item">
                                         <div className="track-control-header">
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                 <div
@@ -613,8 +613,8 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                                                                     min="0"
                                                                     max={originalAudioDuration}
                                                                     step="0.1"
-                                                                    value={track.startTime.toFixed(1)}
-                                                                    onChange={(e) => updateAudioTrack(track.id, 'startTime', parseFloat(e.target.value))}
+                                                                    value={track.startTime}
+                                                                    onChange={(e) => updateAudioTrack(track.id, 'startTime', parseFloat(e.target.value) || 0)}
                                                                     className="time-input"
                                                                     style={{
                                                                         width: '80px',
