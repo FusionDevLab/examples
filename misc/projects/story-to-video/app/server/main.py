@@ -341,6 +341,9 @@ async def accumulate(request: AccumulateRequest):
                     status_code=404, detail=f"Video file not found for scene_id: {scene_id}")
             video_paths.append(str(video_file))
         output_path = data_dir / "story.mp4"
+        # Delete the output file if it exists
+        if output_path.exists():
+            output_path.unlink()
         merge_videos(video_paths, str(output_path))
 
         if not output_path.exists():
@@ -468,7 +471,10 @@ async def mix_audio(request: Request):
                     "config": config,
                     "index": index
                 })
-        output_file=str(audio_dir / f"{scene_id}_mixed.{output_format}")
+        output_file = str(audio_dir / f"{scene_id}_mixed.{output_format}")
+        # Delete the output file if it exists
+        if os.path.exists(output_file):
+            os.remove(output_file)
         mix_audio_tracks(base_audio=str(audio_file),
                   processed_tracks=processed_tracks,
                   output_file=output_file,
@@ -488,6 +494,33 @@ async def mix_audio(request: Request):
         print(f"Audio mixing failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Audio mixing failed: {str(e)}")
         
+@app.post("/generate/audio/accept")
+async def accept_mixed_audio(request: Request):
+    """Accept mixed audio and finalize changes"""
+    try:
+        data = await request.json()
+        story_id = data.get("story_id")
+        scene_id = data.get("scene_id")
+
+        if not story_id or not scene_id:
+            raise HTTPException(status_code=400, detail="story_id and scene_id are required")
+        data_dir = Path(os.getenv("DATA_DIR", "/story")) / story_id
+        audio_dir = data_dir / "audios"
+        audio_dir.mkdir(parents=True, exist_ok=True)
+        mixed_audio_file = audio_dir / f"{scene_id}_mixed.mp3"
+        if not mixed_audio_file.exists():
+            raise HTTPException(status_code=404, detail="Mixed audio file not found")
+        final_audio_file = audio_dir / f"{scene_id}.mp3"
+        if final_audio_file.exists():
+            final_audio_file.unlink()
+        mixed_audio_file.rename(final_audio_file)
+        # Simulate acceptance process
+        print(f"Accepting mixed audio for Story ID: {story_id}, Scene ID: {scene_id}")
+        return {"success": True}
+
+    except Exception as e:
+        print(f"Error accepting mixed audio: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error accepting mixed audio: {str(e)}")
 
 # Health check endpoint
 @app.get("/health")

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ImagePlus, Mic, Film, PlayCircle, PlusCircle, Trash2, X, Video, FileVideo, ChevronDown, ChevronUp, Wand2, Eye, Check, Settings } from 'lucide-react';
+import { ImagePlus, Mic, Film, PlayCircle, PlusCircle, Trash2, X, Video, FileVideo, ChevronDown, ChevronUp, Wand2, Eye, Check, Settings, RotateCcw } from 'lucide-react';
 import './App.css';
 import './AnimationModal.css';
 import './ImageGenerationModal.css';
@@ -706,9 +706,38 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, sele
                         {/* Audio Preview */}
                         {audioGenerated && (
                             <div className="audio-preview-container">
-                                <p className="audio-preview-title">
-                                    🎵 Generated Audio Preview:
-                                </p>
+                                <div className="audio-preview-header">
+                                    <p className="audio-preview-title">
+                                        🎵 Generated Audio Preview:
+                                    </p>
+                                    <button
+                                        className="reload-audio-button"
+                                        onClick={() => {
+                                            // Force reload the audio by updating the URL with a cache-busting parameter
+                                            if (generatedAudioUrl) {
+                                                const url = new URL(generatedAudioUrl, window.location.origin);
+                                                url.searchParams.set('t', Date.now());
+                                                setGeneratedAudioUrl(url.toString());
+                                            }
+                                        }}
+                                        title="Reload Audio"
+                                        disabled={!generatedAudioUrl || isGeneratingAudio || isGeneratingVideo || isAnySceneGenerating || isMergingFinalVideo}
+                                        style={{
+                                            padding: '0.25rem',
+                                            backgroundColor: '#4a9eff',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            opacity: (!generatedAudioUrl || isGeneratingAudio || isGeneratingVideo || isAnySceneGenerating || isMergingFinalVideo) ? 0.5 : 1
+                                        }}
+                                    >
+                                        <RotateCcw size={14} />
+                                    </button>
+                                </div>
                                 <audio
                                     className="audio-player"
                                     controls

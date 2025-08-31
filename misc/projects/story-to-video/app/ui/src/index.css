@@ -574,11 +574,27 @@ button:focus-visible {
   margin-top: 1rem;
 }
 
+.audio-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
 .audio-preview-title {
-  margin: 0 0 0.5rem 0;
+  margin: 0;
   font-size: 0.9rem;
   font-weight: 600;
   color: #495057;
+}
+
+.reload-audio-button:hover:not(:disabled) {
+  background-color: #357abd !important;
+  transform: scale(1.05);
+}
+
+.reload-audio-button:disabled {
+  cursor: not-allowed;
 }
 
 .audio-player {
