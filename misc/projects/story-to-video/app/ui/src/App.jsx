@@ -1544,7 +1544,7 @@ function AppContent() {
             <header className="app-bar">
                 <div className="app-bar-content">
                     <div>
-                        <h1>🎬 Storyline Studio</h1>
+                        <h1>🎬 FableFrames</h1>
                         <p style={{ margin: '0.5rem 0 0 0', opacity: 0.9 }}>
                             Transform your stories into captivating videos
                         </p>
