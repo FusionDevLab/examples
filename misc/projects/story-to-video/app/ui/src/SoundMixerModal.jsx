@@ -359,8 +359,8 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                                                 if (clampedWidthPercent > 0) {
                                                     // Calculate vertical position - ensure no interference with scale markers
                                                     // Original track ends at 35px, scale markers are at bottom (0-22px)
-                                                    const trackTopPosition = 70 + (trackIndex * 35); // Much larger start position and spacing
-                                                    
+                                                    const trackTopPosition = 25 + ((trackIndex + 1) * 16); // Much larger start position and spacing
+
                                                     marks.push(
                                                         <div
                                                             key={`track-bar-${track.id}`}
@@ -371,7 +371,7 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                                                                 width: `${clampedWidthPercent}%`,
                                                                 height: '12px', // Taller tracks for better visibility with increased spacing
                                                                 backgroundColor: track.color,
-                                                                opacity: 0.8,
+                                                                opacity: 0.6,
                                                                 borderRadius: '4px',
                                                                 zIndex: 3,
                                                                 border: `1px solid ${track.color}`,
