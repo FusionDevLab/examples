@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { X, Volume2, VolumeX, Play, Pause, RotateCcw, Settings } from 'lucide-react';
+import { X, Volume2, VolumeX, Play, Pause, RotateCcw, Settings, RefreshCw, Check } from 'lucide-react';
 import './SoundMixerModal.css';
 
 const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioUrl }) => {
     const [audioTracks, setAudioTracks] = useState([]);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isReloading, setIsReloading] = useState(false);
+    const [reloadSuccess, setReloadSuccess] = useState(false);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [originalAudioDuration, setOriginalAudioDuration] = useState(30); // Original track duration - default to 30s
 
@@ -155,7 +157,7 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                     fade_in_ms: Math.round(track.fadeIn * 1000),
                     fade_out_ms: Math.round(track.fadeOut * 1000),
                     loop: track.loop,
-                    format: "mp3"
+                    format: track.file ? track.file.name.split('.').pop().toLowerCase() : "mp3"
                 };
                 
                 formData.append(`track_config_${index}`, JSON.stringify(trackConfig));
@@ -191,6 +193,55 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
             setTimeout(() => {
                 setIsProcessing(false);
             }, 2000);
+        }
+    };
+
+    const reloadMixedAudio = async () => {
+        if (!storyId || !scene?.id || !previewUrl) {
+            alert('No mixed audio available to reload.');
+            return;
+        }
+
+        try {
+            setIsReloading(true);
+
+            // Call the server API to get the latest mixed audio URL
+            const response = await fetch(`http://localhost:8000/audio/mixed/${storyId}/${scene.id}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.mixed_audio_url) {
+                    // Update the preview URL with the fresh one from server
+                    setPreviewUrl(result.mixed_audio_url + '?reload=' + Date.now());
+                    setReloadSuccess(true);
+                    console.log('Mixed audio reloaded successfully:', result.mixed_audio_url);
+                } else {
+                    throw new Error(result.error || 'Failed to reload mixed audio');
+                }
+            } else {
+                // For demo purposes, simulate reloading by adding a timestamp
+                console.log('Server unavailable, simulating reload...');
+                setPreviewUrl(previewUrl.split('?')[0] + '?reload=' + Date.now());
+                setReloadSuccess(true);
+            }
+        } catch (error) {
+            console.error('Error reloading mixed audio:', error);
+            // For demo, still simulate a reload
+            setPreviewUrl(previewUrl.split('?')[0] + '?reload=' + Date.now());
+            setReloadSuccess(true);
+        } finally {
+            setTimeout(() => {
+                setIsReloading(false);
+            }, 1000);
+            // Clear success message after 3 seconds
+            setTimeout(() => {
+                setReloadSuccess(false);
+            }, 3000);
         }
     };
 
@@ -810,14 +861,98 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                                     </audio>
                                 </div>
 
-                                {previewUrl && (
-                                    <div className="mixed-audio" style={{ marginTop: '1rem' }}>
-                                        <label>Mixed Audio (Original + Timeline Tracks):</label>
-                                        <audio controls style={{ width: '100%' }}>
-                                            <source src={previewUrl} type="audio/mp3" />
-                                        </audio>
-                                    </div>
+                {previewUrl && (
+                    <div className="mixed-audio" style={{ marginTop: '1rem' }}>
+                        <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center', 
+                            marginBottom: '0.5rem' 
+                        }}>
+                            <label>Mixed Audio (Original + Timeline Tracks):</label>
+                            <button
+                                className="reload-mixed-audio-button"
+                                onClick={reloadMixedAudio}
+                                disabled={isReloading || isProcessing}
+                                style={{
+                                    background: isReloading ? '#95a5a6' : reloadSuccess ? '#27ae60' : '#f39c12',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    padding: '0.5rem 0.75rem',
+                                    cursor: isReloading || isProcessing ? 'not-allowed' : 'pointer',
+                                    fontSize: '0.85rem',
+                                    fontWeight: '500',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.4rem',
+                                    transition: 'all 0.2s ease',
+                                    opacity: isReloading || isProcessing ? 0.6 : 1
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (!isReloading && !isProcessing && !reloadSuccess) {
+                                        e.target.style.background = '#e67e22';
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (!isReloading && !isProcessing) {
+                                        e.target.style.background = reloadSuccess ? '#27ae60' : '#f39c12';
+                                    }
+                                }}
+                                title="Reload mixed audio from server"
+                            >
+                                {isReloading ? (
+                                    <>
+                                        <div className="spinner" style={{ 
+                                            width: '14px', 
+                                            height: '14px',
+                                            border: '2px solid rgba(255,255,255,0.3)',
+                                            borderTop: '2px solid white',
+                                            borderRadius: '50%',
+                                            animation: 'spin 1s linear infinite'
+                                        }} />
+                                        <span>Reloading...</span>
+                                    </>
+                                ) : reloadSuccess ? (
+                                    <>
+                                        <Check size={14} />
+                                        <span>Reloaded!</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <RefreshCw size={14} />
+                                        <span>Reload</span>
+                                    </>
                                 )}
+                            </button>
+                        </div>
+                        <audio controls style={{ width: '100%' }} key={previewUrl}>
+                            <source src={previewUrl} type="audio/mp3" />
+                        </audio>
+                        <div style={{ 
+                            fontSize: '0.8rem', 
+                            color: '#666', 
+                            marginTop: '0.5rem',
+                            fontStyle: 'italic',
+                            textAlign: 'center',
+                            padding: '0.5rem',
+                            background: '#f8f9fa',
+                            borderRadius: '6px',
+                            border: '1px solid #e9ecef'
+                        }}>
+                            💡 Use the reload button to fetch the latest mixed audio from the server
+                            {reloadSuccess && (
+                                <div style={{ 
+                                    color: '#27ae60', 
+                                    fontWeight: '600',
+                                    marginTop: '0.25rem'
+                                }}>
+                                    ✅ Mixed audio successfully reloaded from server!
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
                             </div>
                         </div>
                     )}

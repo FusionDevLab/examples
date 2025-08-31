@@ -1,4 +1,4 @@
-from module.voice import generate_tts
+from module.voice import generate_tts, mix_audio_tracks
 from module.video import create_video_with_ffmpeg, merge_videos
 from module.image import generate_scene_image
 from module.text import generate_text
@@ -6,8 +6,9 @@ from module.text import generate_text
 import os
 import base64
 import re
+import json
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
@@ -395,6 +396,98 @@ async def init_story(request: InitRequest):
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Story initialization failed: {str(e)}")
+
+@app.post("/generate/audio/mix")
+async def mix_audio(request: Request):
+    """
+    Mix base audio with overlay tracks
+    Handles dynamic form field names: overlay_file_0, overlay_file_1, etc.
+    and track_config_0, track_config_1, etc.
+    """
+    try:
+        form_data = await request.form()
+        
+        # Get metadata
+        metadata_str = form_data.get("metadata")
+        if not metadata_str:
+            raise HTTPException(status_code=400, detail="metadata is required")
+        
+        meta = json.loads(metadata_str)
+        print(f"Mixing audio for story_id: {meta.get('story_id')}")
+        
+        story_id = meta.get("story_id")
+        if not story_id:
+            raise HTTPException(status_code=400, detail="story_id is required in metadata")
+        
+        scene_id = meta.get("scene_id")
+        if not scene_id:
+            raise HTTPException(status_code=400, detail="scene_id is required in metadata")
+
+        # Get base audio info
+        output_format = meta.get("output_format", "mp3")
+        normalize = meta.get("normalize", True)
+        export_quality = meta.get("export_quality", "high")
+
+        data_dir = Path(os.getenv("DATA_DIR", "/story")) / story_id
+        audio_dir = data_dir / "audios"
+        audio_dir.mkdir(parents=True, exist_ok=True)
+
+        audio_file = audio_dir / f"{scene_id}.mp3"
+
+        # Extract overlay files and configs by matching field name patterns
+        overlay_files = {}
+        track_configs = {}
+        
+        for field_name, field_value in form_data.items():
+            if field_name.startswith("overlay_file_"):
+                index = field_name.split("_")[-1]  # Get index from overlay_file_0, overlay_file_1, etc.
+                overlay_files[index] = field_value
+            elif field_name.startswith("track_config_"):
+                index = field_name.split("_")[-1]  # Get index from track_config_0, track_config_1, etc.
+                track_configs[index] = field_value
+        
+        # Process uploaded overlay files and their configs
+        processed_tracks = []
+        
+        for index in sorted(overlay_files.keys()):
+            if index in track_configs:
+                file = overlay_files[index]
+                config_str = track_configs[index]
+                config = json.loads(config_str)
+                
+                print(f"Processing file: {file.filename} with config: {config}")
+                
+                # Save the uploaded file temporarily
+                file_path = audio_dir / f"overlay_{scene_id}_{index}_{file.filename}"
+                audio_data = await file.read()
+                with open(file_path, "wb") as f:
+                    f.write(audio_data)
+                
+                processed_tracks.append({
+                    "file_path": str(file_path),
+                    "config": config,
+                    "index": index
+                })
+        output_file=str(audio_dir / f"{scene_id}_mixed.{output_format}")
+        mix_audio_tracks(base_audio=str(audio_file),
+                  processed_tracks=processed_tracks,
+                  output_file=output_file,
+                  normalize=normalize,
+                  export_format=output_format)
+
+        print(f"Successfully processed {len(processed_tracks)} overlay tracks")
+        print(f"Mixed audio saved to: {output_file}")
+        return {
+            "success": True,
+            "mixed_audio_url": f"http://localhost:8000/files/{story_id}/audios/{scene_id}_mixed.{output_format}"
+        }
+        
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid JSON in metadata or track config: {str(e)}")
+    except Exception as e:
+        print(f"Audio mixing failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Audio mixing failed: {str(e)}")
+        
 
 # Health check endpoint
 @app.get("/health")
