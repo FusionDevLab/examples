@@ -359,7 +359,7 @@
 }
 
 .add-track-button {
-    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -372,7 +372,7 @@
 }
 
 .add-track-button:hover {
-    background: linear-gradient(135deg, #219a52, #27ae60);
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(39, 174, 96, 0.4);
 }
@@ -650,7 +650,7 @@
 }
 
 .preview-mix-button {
-    background: #27ae60;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -666,7 +666,7 @@
 }
 
 .preview-mix-button:hover:not(:disabled) {
-    background: #229954;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     transform: translateY(-1px);
 }
 

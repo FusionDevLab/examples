@@ -670,7 +670,7 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, sele
                                 title="Sound Mixer (Experimental)"
                                 disabled={!audioGenerated || isGeneratingAudio || isGeneratingVideo || isAnySceneGenerating || isMergingFinalVideo}
                                 style={{ 
-                                    background: 'linear-gradient(135deg, #9b59b6, #8e44ad)',
+                                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                                     position: 'relative',
                                     overflow: 'hidden'
                                 }}
@@ -1267,7 +1267,7 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, sele
                                 className="video-player"
                                 controls
                                 preload="metadata"
-                                poster={uploadedImage}
+                                // poster={uploadedImage}
                                 onError={(e) => console.error('Video error:', e)}
                             >
                                 {generatedVideoUrl && <source src={generatedVideoUrl} type="video/mp4" />}

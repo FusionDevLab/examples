@@ -1071,7 +1071,7 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                         onClick={generateMixedAudio}
                         disabled={!generatedAudioUrl || isProcessing || isAccepting || audioTracks.length === 0}
                         style={{
-                            background: (isProcessing || isAccepting || !generatedAudioUrl || audioTracks.length === 0) ? '#95a5a6' : '#3498db',
+                            background: (isProcessing || isAccepting || !generatedAudioUrl || audioTracks.length === 0) ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
                             color: 'white',
                             border: 'none',
                             borderRadius: '6px',
@@ -1090,12 +1090,12 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                         }}
                         onMouseEnter={(e) => {
                             if (!isProcessing && !isAccepting && generatedAudioUrl && audioTracks.length > 0) {
-                                e.target.style.background = '#2980b9';
+                                e.target.style.background = 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)';
                             }
                         }}
                         onMouseLeave={(e) => {
                             if (!isProcessing && !isAccepting && generatedAudioUrl && audioTracks.length > 0) {
-                                e.target.style.background = '#3498db';
+                                e.target.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
                             }
                         }}
                     >
@@ -1117,7 +1117,7 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                         onClick={acceptMixedAudio}
                         disabled={isProcessing || isAccepting || !previewUrl}
                         style={{
-                            background: (isProcessing || isAccepting || !previewUrl) ? '#95a5a6' : '#27ae60',
+                            background: (isProcessing || isAccepting || !previewUrl) ? 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                             color: 'white',
                             border: 'none',
                             borderRadius: '6px',
@@ -1136,12 +1136,12 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                         }}
                         onMouseEnter={(e) => {
                             if (!isProcessing && !isAccepting && previewUrl) {
-                                e.target.style.background = '#229954';
+                                e.target.style.background = 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)';
                             }
                         }}
                         onMouseLeave={(e) => {
                             if (!isProcessing && !isAccepting && previewUrl) {
-                                e.target.style.background = '#27ae60';
+                                e.target.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
                             }
                         }}
                         title={!previewUrl ? "Generate mixed audio first to accept changes" : "Accept and save mixed audio changes"}
