@@ -226,15 +226,13 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                                     className="add-track-button"
                                     onClick={addAudioTrack}
                                 >
-                                    + Add Audio Track
+                                    + Track
                                 </button>
                             </div>
                         </div>
 
                         {/* Timeline Ruler */}
                         <div className="timeline-ruler" style={{
-                            marginBottom: '1.5rem',
-                            padding: '1rem',
                             backgroundColor: '#f8f9fa',
                             borderRadius: '8px',
                             border: '1px solid #e9ecef'
@@ -242,7 +240,7 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                             <div style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                marginBottom: '0.5rem'
+                                marginBottom: '0.1rem'
                             }}>
                                 <span style={{
                                     fontSize: '0.9rem',
@@ -254,11 +252,13 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                             </div>
                             <div className="ruler-container" style={{
                                 position: 'relative',
-                                height: '40px',
+                                height: `${Math.max(180, 120 + (audioTracks.filter(track => track.url && track.duration > 0).length * 35))}px`, // Much larger base height and spacing
                                 background: 'linear-gradient(to bottom, #ffffff, #f8f9fa)',
                                 border: '1px solid #dee2e6',
                                 borderRadius: '4px',
-                                overflow: 'hidden'
+                                overflow: 'hidden',
+                                transition: 'height 0.3s ease', // Smooth height transition
+                                marginBottom: '1rem' // Reduced internal bottom margin
                             }}>
                                 {/* Ruler marks and labels */}
                                 <div className="ruler-marks" style={{
@@ -333,9 +333,9 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                                                 style={{
                                                     position: 'absolute',
                                                     left: '0%',
-                                                    top: '5px',
+                                                    top: '25px',
                                                     width: `${originalTrackPercent}%`,
-                                                    height: '30px',
+                                                    height: '12px',
                                                     backgroundColor: '#3498db',
                                                     opacity: 0.5,
                                                     borderRadius: '2px',
@@ -344,6 +344,75 @@ const SoundMixerModal = ({ show, onClose, scene, index, storyId, generatedAudioU
                                                 }}
                                             />
                                         );
+                                        
+                                        // Add audio track visualization bars
+                                        audioTracks.forEach((track, trackIndex) => {
+                                            if (track.url && track.duration > 0) {
+                                                const trackStartPercent = (track.startTime / maxTime) * 100;
+                                                const trackEndPercent = ((track.startTime + track.duration) / maxTime) * 100;
+                                                const trackWidthPercent = trackEndPercent - trackStartPercent;
+                                                
+                                                // Clamp values to prevent overflow
+                                                const clampedStartPercent = Math.max(0, Math.min(100, trackStartPercent));
+                                                const clampedWidthPercent = Math.max(0, Math.min(100 - clampedStartPercent, trackWidthPercent));
+                                                
+                                                if (clampedWidthPercent > 0) {
+                                                    // Calculate vertical position - ensure no interference with scale markers
+                                                    // Original track ends at 35px, scale markers are at bottom (0-22px)
+                                                    const trackTopPosition = 70 + (trackIndex * 35); // Much larger start position and spacing
+                                                    
+                                                    marks.push(
+                                                        <div
+                                                            key={`track-bar-${track.id}`}
+                                                            style={{
+                                                                position: 'absolute',
+                                                                left: `${clampedStartPercent}%`,
+                                                                top: `${trackTopPosition}px`,
+                                                                width: `${clampedWidthPercent}%`,
+                                                                height: '12px', // Taller tracks for better visibility with increased spacing
+                                                                backgroundColor: track.color,
+                                                                opacity: 0.8,
+                                                                borderRadius: '4px',
+                                                                zIndex: 3,
+                                                                border: `1px solid ${track.color}`,
+                                                                boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                                                            }}
+                                                        />
+                                                    );
+                                                    
+                                                    // Add track label if there's enough space
+                                                    if (clampedWidthPercent > 15) {
+                                                        marks.push(
+                                                            <div
+                                                                key={`track-label-${track.id}`}
+                                                                style={{
+                                                                    position: 'absolute',
+                                                                    left: `${clampedStartPercent + (clampedWidthPercent / 2)}%`,
+                                                                    top: `${trackTopPosition + 6}px`, // Center vertically on taller track bar
+                                                                    transform: 'translateX(-50%)',
+                                                                    fontSize: '0.75rem', // Better readable font
+                                                                    color: '#333',
+                                                                    fontWeight: '600',
+                                                                    backgroundColor: 'rgba(255,255,255,0.95)',
+                                                                    padding: '0.15rem 0.4rem',
+                                                                    borderRadius: '3px',
+                                                                    whiteSpace: 'nowrap',
+                                                                    zIndex: 4,
+                                                                    textShadow: '0 0 2px rgba(255,255,255,0.8)',
+                                                                    border: '1px solid rgba(0,0,0,0.1)',
+                                                                    maxWidth: `${clampedWidthPercent}%`,
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    lineHeight: '1.2'
+                                                                }}
+                                                            >
+                                                                Track {trackIndex + 1}
+                                                            </div>
+                                                        );
+                                                    }
+                                                }
+                                            }
+                                        });
                                         
                                         // Add scene duration indicator
                                         const sceneDurationPercent = (originalAudioDuration / maxTime) * 100;

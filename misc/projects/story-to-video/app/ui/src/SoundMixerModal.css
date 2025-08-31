@@ -144,6 +144,7 @@
 /* Timeline Styles */
 .timeline-container {
     background: white;
+    height: 300px;
     border-radius: 8px;
     padding: 1rem;
     border: 1px solid #e1e5e9;
@@ -152,7 +153,8 @@
 
 .timeline-ruler {
     position: relative;
-    height: 30px;
+    height: 240px;
+    overflow-y: scroll;
     background: linear-gradient(to bottom, #f8f9fa 0%, #e9ecef 100%);
     border-bottom: 2px solid #dee2e6;
     margin-bottom: 10px;
