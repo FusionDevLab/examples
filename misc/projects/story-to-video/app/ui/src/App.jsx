@@ -7,7 +7,7 @@ import SoundMixerModal from './SoundMixerModal';
 import { ToastProvider, useToast } from './Toast';
 
 // Scene Component
-const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, storyId, isAnySceneGenerating, setIsAnySceneGenerating, isMergingFinalVideo, allScenes }) => {
+const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, selectedVoice, storyId, isAnySceneGenerating, setIsAnySceneGenerating, isMergingFinalVideo, allScenes }) => {
     const { toast } = useToast();
     const [uploadedImage, setUploadedImage] = useState(null);
     const [audioGenerated, setAudioGenerated] = useState(false);
@@ -387,8 +387,8 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
 
     const generateAudio = async () => {
         // Generate audio via API call
-        const voiceSettings = globalVoiceInstructions ? ` (Voice: ${globalVoiceInstructions})` : '';
-        console.log(`Generating audio for Story ID: ${storyId}, Scene ${index + 1}`);
+        const voiceToUse = selectedVoice || 'alloy';
+        console.log(`Generating audio for Story ID: ${storyId}, Scene ${index + 1} with voice ${voiceToUse} (original: ${selectedVoice})`);
 
         try {
             // Show loading state
@@ -407,7 +407,8 @@ const Scene = ({ scene, index, onUpdate, onRemove, globalVoiceInstructions, stor
                     scene_id: String(scene.id),
                     text: scene.text,
                     voice_settings: {
-                        instruction: globalVoiceInstructions || ''
+                        instruction: globalVoiceInstructions || '',
+                        voice: selectedVoice || 'alloy'
                     }
                 })
             });
@@ -1293,6 +1294,13 @@ function AppContent() {
     const [scenes, setScenesState] = useState(() => loadFromLocalStorage('storyline-studio-scenes', []));
     const [isAnySceneGenerating, setIsAnySceneGenerating] = useState(false);
     const [isMergingFinalVideo, setIsMergingFinalVideo] = useState(false);
+    const [selectedVoice, setSelectedVoiceState] = useState(() => 
+        loadFromLocalStorage('storyline-studio-selected-voice', 'alloy')
+    );
+    
+    // Debug logging for selectedVoice
+    console.log('Current selectedVoice state:', selectedVoice);
+    
     const [voiceInstructions, setVoiceInstructionsState] = useState(() => 
         loadFromLocalStorage('storyline-studio-voice-instructions', 
             '🎙️ Narration Instruction (Adaptive Delivery)\n\nAccent: Neutral Indian English, clear and grounded.\n\nTone: Serious, but with subtle shifts — reflective at the start, energetic in the middle, then darker toward the end.\n\nMood: Gloomy undertone throughout, but with sparks of energy that echo his fleeting highs.\n\nDelivery Flow (per story beat):\n\nOpening (reflective, steady pace)\n"Interviews, fan messages, and public appearances filled his days."\n→ Calm, matter-of-fact, almost weary.\n\n"Initially, he responded to fans, humble and grateful."\n→ Gentle, softened voice, slower.\n\nRising Admiration (quicker, more engaged)\n"He felt alive, powerful, adored. He reveled in praise, each view and comment inflating his pride. Even small compliments felt like treasures."\n→ Increase pacing slightly, add a touch of brightness in tone — but not joyous, rather intoxicated.\n\nThe High (confident, energetic rhythm)\n"The world seemed to obey him. Music flowed effortlessly. The feeling was intoxicating."\n→ Crisp delivery, medium-fast pace, a hint of wonder — but with a shadow underneath.\n\nThe Shift (slower, darker again)\n"He started imagining bigger dreams, larger stages, more recognition."\n→ Slight pause between phrases, like ambition swelling.\n\n"For a while, life felt perfect, magical, unstoppable."\n→ Deliver with restrained intensity — the pace slows, voice lowers at "unstoppable," foreshadowing collapse.\n\n⚖️ Overall rhythm: Not monotone slow — instead, it rises with his pride and falls back into gloom, mirroring the story arc.'
@@ -1336,7 +1344,22 @@ function AppContent() {
         saveToLocalStorage('storyline-studio-voice-instructions', newInstructions);
     };
 
-    // Initialize story with server when component mounts
+    const setSelectedVoice = (newVoice) => {
+        setSelectedVoiceState(newVoice);
+        saveToLocalStorage('storyline-studio-selected-voice', newVoice);
+    };
+
+    // OpenAI supported voices
+    const openAIVoices = [
+        { id: 'alloy', name: 'Alloy', description: 'Balanced and versatile' },
+        { id: 'echo', name: 'Echo', description: 'Warm and engaging' },
+        { id: 'fable', name: 'Fable', description: 'Expressive and storytelling' },
+        { id: 'onyx', name: 'Onyx', description: 'Deep and authoritative' },
+        { id: 'nova', name: 'Nova', description: 'Bright and energetic' },
+        { id: 'shimmer', name: 'Shimmer', description: 'Gentle and soothing' }
+    ];
+
+    // Initialize state with localStorage data
     useEffect(() => {
         const initializeStory = async () => {
             try {
@@ -1376,7 +1399,8 @@ function AppContent() {
             image: null,
             hasAudio: false,
             hasVideo: false,
-            storyId: storyId
+            storyId: storyId,
+            voice: selectedVoice
         }]);
     };
 
@@ -1475,10 +1499,12 @@ function AppContent() {
             // Generate a new story ID on reset
             const newStoryId = `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             setStoryId(newStoryId);
+            setSelectedVoice('alloy');
             // Clear localStorage data
             localStorage.removeItem('storyline-studio-scenes');
             localStorage.removeItem('storyline-studio-voice-instructions');
             localStorage.removeItem('storyline-studio-story-id');
+            localStorage.removeItem('storyline-studio-selected-voice');
             saveToLocalStorage('storyline-studio-story-id', newStoryId);
         }
     };
@@ -1524,6 +1550,30 @@ function AppContent() {
                         </p>
                     </div>
 
+                    {/* Voice Selection */}
+                    <div className={`voice-selection-container ${isAnySceneGenerating || isMergingFinalVideo ? 'disabled' : ''}`}>
+                        <label htmlFor="voice-selection" className="voice-selection-label">
+                            🎤
+                        </label>
+                        <select
+                            id="voice-selection"
+                            className="voice-selection-select"
+                            value={selectedVoice}
+                            onChange={(e) => setSelectedVoice(e.target.value)}
+                            disabled={isAnySceneGenerating || isMergingFinalVideo}
+                        >
+                            {openAIVoices.map(voice => (
+                                <option key={voice.id} value={voice.id}>
+                                    {voice.name} - {voice.description}
+                                </option>
+                            ))}
+                        </select>
+                        <p className="voice-selection-help">
+                            Choose a voice for narration. This will be used for all scenes.
+                            {(isAnySceneGenerating || isMergingFinalVideo) && ' (disabled during generation)'}
+                        </p>
+                    </div>
+
                     <button className="add-scene-button" onClick={addScene} disabled={isAnySceneGenerating || isMergingFinalVideo}>
                         <PlusCircle size={24} style={{ marginRight: '0.5rem' }} />
                         {isAnySceneGenerating || isMergingFinalVideo ? 'Generation in progress...' : 'Add New Scene'}
@@ -1542,6 +1592,7 @@ function AppContent() {
                                 onUpdate={updateScene}
                                 onRemove={removeScene}
                                 globalVoiceInstructions={voiceInstructions}
+                                selectedVoice={selectedVoice}
                                 storyId={storyId}
                                 isAnySceneGenerating={isAnySceneGenerating}
                                 setIsAnySceneGenerating={setIsAnySceneGenerating}

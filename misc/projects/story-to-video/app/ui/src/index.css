@@ -797,3 +797,15 @@ button:focus-visible {
   margin: 0.5rem;
   transition: color 0.2s;
 }
+
+.voice-selection-select {
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 2px solid #e0e0e0;
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+  background-color: white;
+  color: #333;
+  cursor: pointer;
+}
